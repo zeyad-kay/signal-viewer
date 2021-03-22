@@ -1,4 +1,5 @@
 import tkinter as tk
+from file_explorer import File_Explorer
 
 class Application(tk.Frame):
     def __init__(self, master=None):
@@ -7,19 +8,20 @@ class Application(tk.Frame):
         self.pack()
         self.create_widgets()
 
+
     def create_widgets(self):
-        self.hi_there = tk.Button(self)
-        self.hi_there["text"] = "Hello World\n(click me)"
-        self.hi_there["command"] = self.say_hi
-        self.hi_there.pack(side="top")
+        self.explorer = File_Explorer(self)
+        # sets the position
+        self.explorer.pack(side="top")
 
-        self.quit = tk.Button(self, text="QUIT", fg="red",
-                              command=self.master.destroy)
-        self.quit.pack(side="bottom")
+        self.label = tk.Label(self)
+        
+        def set_label(e):
+            self.label["text"]=self.explorer.content
 
-    def say_hi(self):
-        print("hi there, everyone!")
-
+        self.bind("<<Fileread>>", set_label)   
+        self.label.pack()
+        
 root = tk.Tk()
 app = Application(master=root)
 app.mainloop()
