@@ -5,7 +5,6 @@ from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.figure import Figure
 from matplotlib.animation import FuncAnimation
-from matplotlib.widgets import Button
 
 class Viewer(tk.Frame):
     def __init__(self,master=None,index=0,data={}):
@@ -15,13 +14,15 @@ class Viewer(tk.Frame):
         self._plot = None
         self.play = True
         self.data = data
+        self.scale = 1
 
     def __render_plot(self):
         
         self._figure.subplots(1,1)
         line = self._figure.axes[0].plot([],[])[0]
         def init():
-            line.axes.set_xlim(0,10)
+            line.axes.set_xlim(0,self.data["x"][100])
+            # line.axes.set_xlim(0,self.data["x"][-1])
             line.axes.set_ylim(-10,10)
             # line.axes.autoscale()
             line.axes.set_xlabel("Time")
@@ -43,7 +44,6 @@ class Viewer(tk.Frame):
                 return [line]
             except Exception as e:
                 print("---------Err---------")
-                # print(x)
      
         def toggle():
             if self.play :
@@ -56,7 +56,7 @@ class Viewer(tk.Frame):
 
         
         self._animation = FuncAnimation(self._figure, update,
-            init_func=init, interval=1,blit=True,repeat=False)
+            init_func=init, interval=0.001,blit=True,repeat=False)
         
         self._play_btn = tk.Button(self.master,text="pause")
         self._play_btn.configure(command=lambda : toggle())
@@ -64,7 +64,59 @@ class Viewer(tk.Frame):
         
         self._figure.canvas.draw_idle()
         self._figure.canvas.get_tk_widget().grid(row=self.index+1,columns=1,sticky = 'nswe')
-        self._figure.canvas.mpl_connect('axes_enter_event', self.control)    
+
+        def control(e):
+            
+            # self._figure.canvas.mpl_disconnect
+            def pan():
+                self._figure.axes[0].start_pan(1,e.xdata,e.ydata)
+                
+                def drag(ev):
+                    self._figure.axes[0].drag_pan(1,None,ev.xdata,ev.ydata)
+                    print(self._figure.axes[0].get_lines())
+
+                # self._figure.canvas.mpl_connect('button_release_event', drag)
+
+            def zoom_out():
+                # self._figure.axes[0].set_xlim(0,20)
+                # line.axes.set_xlim(0,30)
+                # line.axes.set_xticklabels(range(0,20))
+                # line.axes.set_xticks(range(0,20))
+                # line.axes.set_xticks(range(0,30,10))
+                # line.axes.set_xticklabels(range(0,30,10))
+                xmin,xmax = line.axes.get_xlim()
+                ymin,ymax = line.axes.get_ylim()
+                if self.scale > 1 :
+                    self.scale = self.scale - 1
+                line.axes.set_xlim(self.scale * xmin,self.scale * xmax)
+                line.axes.set_ylim(self.scale * ymin,self.scale * ymax)
+            def zoom_in(x,y):
+                xmin,xmax = line.axes.get_xlim()
+                ymin,ymax = line.axes.get_ylim()
+                self.scale = self.scale + 1    
+                line.axes.set_xlim(xmin / self.scale , xmax / self.scale)
+                line.axes.set_ylim(ymin / self.scale, ymax / self.scale)
+                # self._figure.axes[0].callbacks.connect('xlim_changed', lambda event: self._animation._blit_cache.clear())
+                # self._figure.axes[0].callbacks.connect('ylim_changed', lambda event: self._animation._blit_cache.clear())
+            
+            control_mapping = {
+                "plus":zoom_in,
+                "circle":zoom_out,
+                "fleur":pan
+            }
+            
+            app = self.master.children["!application"]
+            if app.get_cursor() == "arrow":
+                print("arr")
+            else:
+                control_mapping[app.get_cursor()]()
+            
+            self._figure.canvas.draw_idle()
+        
+        self.cid = self._figure.canvas.mpl_connect('button_press_event', control)
+        
+        
+
     
     def add_plot(self):
                 
@@ -83,7 +135,6 @@ class Viewer(tk.Frame):
         self.__render_plot()
         
 
-        # pack_toolbar=False will make it easier to use a layout manager later on.
         
     def __pause(self):
         self._animation.event_source.stop()
@@ -98,7 +149,12 @@ class Viewer(tk.Frame):
             "circle":self.zoom_out,
             "fleur":self.pan
         }
-        control_mapping[self.master.get_cursor()]()
+        app = self.master.children["!application"]
+        if app.get_cursor() == "arrow":
+            print("arr")
+        else:
+            control_mapping[app.get_cursor()]()
+            
         # self._figure.axes[0].set_xticks(range(0,3))
         # self._figure.axes[0].set_xticklabels(range(0,3))
         # self._figure.axes[0].set_xticks(range(0,20))
@@ -106,14 +162,17 @@ class Viewer(tk.Frame):
         # self._figure.axes[0].start_pan(e.xdata,e.ydata,3)
         # self.master.change_cursor(self.master.get_cursor())
 
-    def pan(self):
-        print("pan")
+    # def pan(self):
+    #     print("pan")
     
-    def zoom_in(self):
-        print("in")
+    # def zoom_in(self):
+    #     print("oo")
+    #     # self._figure.axes[0].set_xlim(0,20)
+    #     line.axes.set_xticks(range(0,20))
+    #     line.axes.set_xticklabels(range(0,20))
 
-    def zoom_out(self):
-        print("out")
+    # def zoom_out(self):
+    #     print("out")
     
     def cleanup(self):    
         self.__pause()
