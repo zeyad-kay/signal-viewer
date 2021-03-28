@@ -11,7 +11,7 @@ class ToolBar(tk.Frame):
 		# self.master.grid(row=0,column=0)
 		self.grid(row=0,column=5,sticky="ew")
 		self.openImg = tk.PhotoImage(file="images/folder1.png")
-		self.openButton = tk.Button(self , image=self.openImg , command=File_Explorer.browse_files)
+		self.openButton = tk.Button(self , image=self.openImg , command=lambda : File_Explorer.browse_files(master))
 		self.openButton.grid(row=0 ,column=0,padx=5,pady=3)
 		
 		#save as button + the icon

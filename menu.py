@@ -8,7 +8,7 @@ class MenuBar(tk.Menu):
 
         fileMenu = tk.Menu(self, tearoff=False)
         self.add_cascade(label="File", menu=fileMenu)
-        fileMenu.add_command(label="Open File",  command=File_Explorer.browse_files)
+        fileMenu.add_command(label="Open File",  command=lambda : File_Explorer.browse_files(master))
         fileMenu.add_command(label="Save as",  command=self.quit)
         fileMenu.add_separator() 
         fileMenu.add_command(label="Exit",  command=self.quit)

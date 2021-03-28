@@ -31,9 +31,6 @@ class Application(tk.Frame):
             self.pointer = "arrow"
         self.master.config(cursor=self.pointer)
 
-    def read_data(self):
-        self.plots_data.append(read_file("sampleECG.edf"))
-
     def create_viewer(self,data):
         viewer = Viewer(self.master,self.viewers.__len__(),data)
         return viewer
@@ -47,10 +44,9 @@ class Application(tk.Frame):
                 viewer.cleanup()
             self.viewers = []
         
-        def plot_signal(e):
-            self.read_data()
+        def plot_signal(d):
+            self.plots_data.append(read_file(d))
             delete_viewers()
-
             for i,plot in enumerate(self.plots_data):
                 self.master.rowconfigure(i+1,weight=1)
                 v=self.create_viewer(plot)
@@ -58,7 +54,10 @@ class Application(tk.Frame):
                 self.viewers.append(v)
                 v.add_plot()
         
-        self.master.bind("<KeyPress>",plot_signal)
+        callback = self.master.register(plot_signal)
+
+        self.master.call("bind", self.master, "<<Fileupload>>", callback + " %d")
+        
 
 if __name__ == "__main__":
     root = tk.Tk()
