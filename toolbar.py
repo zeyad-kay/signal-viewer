@@ -1,14 +1,11 @@
 import tkinter as tk
 from file_explorer import File_Explorer
-from helpers import read_file
 
 class ToolBar(tk.Frame):
 	def __init__(self,master=None):
-		# super().__init__(master)
 		super().__init__(master,bg="white")
 		self.master = master
 		# open file button + the icon
-		# self.master.grid(row=0,column=0)
 		self.grid(row=0,column=5,sticky="ew")
 		self.openImg = tk.PhotoImage(file="images/folder1.png")
 		self.openButton = tk.Button(self , image=self.openImg , command=lambda : File_Explorer.browse_files(master))

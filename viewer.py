@@ -1,8 +1,8 @@
 import tkinter as tk
+import numpy as np
 from matplotlib.pyplot import rcParams
 from matplotlib.backends.backend_pdf import PdfPages
-from matplotlib.backends.backend_tkagg import (
-    FigureCanvasTkAgg, NavigationToolbar2Tk)
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from matplotlib.animation import FuncAnimation
 
@@ -12,7 +12,7 @@ class Viewer(tk.Frame):
         self.master = master
         self.index = index
         self._plot = None
-        self.play = True
+        self._play = True
         self.data = data
         self.scale = 1
 
@@ -20,11 +20,10 @@ class Viewer(tk.Frame):
         
         self._figure.subplots(1,1)
         line = self._figure.axes[0].plot([],[])[0]
+        
         def init():
-            line.axes.set_xlim(0,self.data["x"][100])
-            # line.axes.set_xlim(0,self.data["x"][-1])
-            line.axes.set_ylim(-10,10)
-            # line.axes.autoscale()
+            line.axes.set_xlim(0,self.data["x"][1000])
+            line.axes.set_ylim(min(self.data["y"]),max(self.data["y"]))
             line.axes.set_xlabel("Time")
             line.axes.set_ylabel("Amplitude")
             line.axes.grid(True)
@@ -32,36 +31,41 @@ class Viewer(tk.Frame):
         
         def update(frame):
             try:
-                x = self._plot["x"][:frame + 1]
-                y = self._plot["y"][:frame + 1]
+                x = self.data["x"][:frame + 1]
+                y = self.data["y"][:frame + 1]
                 xmin,xmax = line.axes.get_xlim()
                 ymin,ymax = line.axes.get_ylim()
                 if x[-1] > xmax:
                     line.axes.set_xlim(xmin,xmax*2)
-                if y[-1] > ymax:    
-                    line.axes.set_ylim(ymin,ymax*2)
+                    t = np.linspace(0,xmax*2,5)
+                    line.axes.set_xticks(t)
+                    line.axes.set_xticklabels(t)
+                    line.axes.grid(True)
+                    line.set_data(x, y)
+                    self._figure.canvas.draw_idle()
+                    
+                self._figure.canvas.flush_events()
                 line.set_data(x, y)
                 return [line]
             except Exception as e:
                 print("---------Err---------")
      
         def toggle():
-            if self.play :
-                self.__pause()
+            if self._play :
+                self.pause()
                 self._play_btn["text"] = "play"
             else:
-                self.__play()
+                self.play()
                 self._play_btn["text"] = "pause"
-
-
         
+        # Setting the Interval too low messes up the the event loop
         self._animation = FuncAnimation(self._figure, update,
-            init_func=init, interval=0.001,blit=True,repeat=False)
+            init_func=init, interval=100,blit=True,repeat=False)
         
         self._play_btn = tk.Button(self.master,text="pause")
         self._play_btn.configure(command=lambda : toggle())
         self._play_btn.grid(row=self.index+1,columns=1)
-        
+
         self._figure.canvas.draw_idle()
         self._figure.canvas.get_tk_widget().grid(row=self.index+1,columns=1,sticky = 'nswe')
 
@@ -90,12 +94,16 @@ class Viewer(tk.Frame):
                     self.scale = self.scale - 1
                 line.axes.set_xlim(self.scale * xmin,self.scale * xmax)
                 line.axes.set_ylim(self.scale * ymin,self.scale * ymax)
-            def zoom_in(x,y):
+            
+            def zoom_in():
                 xmin,xmax = line.axes.get_xlim()
                 ymin,ymax = line.axes.get_ylim()
                 self.scale = self.scale + 1    
-                line.axes.set_xlim(xmin / self.scale , xmax / self.scale)
-                line.axes.set_ylim(ymin / self.scale, ymax / self.scale)
+                line.axes.set_xlim(e.xdata/2,e.xdata*2)
+                line.axes.set_ylim(e.ydata/2,e.ydata*2)
+                # line.axes.set_xlim(xmin / self.scale , xmax / self.scale)
+                # line.axes.set_ylim(ymin / self.scale, ymax / self.scale)
+                # self._figure.canvas.flush_events()
                 # self._figure.axes[0].callbacks.connect('xlim_changed', lambda event: self._animation._blit_cache.clear())
                 # self._figure.axes[0].callbacks.connect('ylim_changed', lambda event: self._animation._blit_cache.clear())
             
@@ -119,16 +127,8 @@ class Viewer(tk.Frame):
 
     
     def add_plot(self):
-                
+        # inches to pixel conversion    
         px = 1/rcParams['figure.dpi']
-        
-        self._plot = dict({
-            "play":False,
-            "x": self.data["x"],
-            "y": self.data["y"],
-            "label": self.data["label"]
-        })
-
         self._figure = Figure(figsize=((self.master.winfo_screenwidth())*px, (self.master.winfo_screenheight())*px),constrained_layout=True)
         FigureCanvasTkAgg(self._figure, master=self.master)
         
@@ -136,13 +136,14 @@ class Viewer(tk.Frame):
         
 
         
-    def __pause(self):
+    def pause(self):
         self._animation.event_source.stop()
-        self.play = False
-    def __play(self):
+        self._play = False
+
+    def play(self):
         self._animation.event_source.start()
-        self.play = True
-    
+        self._play = True
+
     def control(self,e):
         control_mapping = {
             "plus":self.zoom_in,
@@ -154,26 +155,7 @@ class Viewer(tk.Frame):
             print("arr")
         else:
             control_mapping[app.get_cursor()]()
-            
-        # self._figure.axes[0].set_xticks(range(0,3))
-        # self._figure.axes[0].set_xticklabels(range(0,3))
-        # self._figure.axes[0].set_xticks(range(0,20))
-        # self._figure.axes[0].set_yticklabels(range(0,20))
-        # self._figure.axes[0].start_pan(e.xdata,e.ydata,3)
-        # self.master.change_cursor(self.master.get_cursor())
-
-    # def pan(self):
-    #     print("pan")
-    
-    # def zoom_in(self):
-    #     print("oo")
-    #     # self._figure.axes[0].set_xlim(0,20)
-    #     line.axes.set_xticks(range(0,20))
-    #     line.axes.set_xticklabels(range(0,20))
-
-    # def zoom_out(self):
-    #     print("out")
     
     def cleanup(self):    
-        self.__pause()
+        self.pause()
         self.destroy()
