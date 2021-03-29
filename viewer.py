@@ -7,14 +7,13 @@ from matplotlib.figure import Figure
 from matplotlib.animation import FuncAnimation
 
 class Viewer(tk.Frame):
-    def __init__(self,master=None,index=0,data={}):
+    def __init__(self,master=None,order=0,data={}):
         super().__init__(master)
         self.master = master
-        self.index = index
-        self._plot = None
+        self.order = order
+        self.zoom_step = 2
         self._play = True
         self.data = data
-        self.scale = 1
 
     def __render_plot(self):
         
@@ -23,7 +22,7 @@ class Viewer(tk.Frame):
         
         def init():
             line.axes.set_xlim(0,self.data["x"][1000])
-            line.axes.set_ylim(min(self.data["y"]),max(self.data["y"]))
+            line.axes.set_ylim(min(self.data["y"]) * self.zoom_step,max(self.data["y"]) * self.zoom_step)
             line.axes.set_xlabel("Time")
             line.axes.set_ylabel("Amplitude")
             line.axes.grid(True)
@@ -33,17 +32,23 @@ class Viewer(tk.Frame):
             try:
                 x = self.data["x"][:frame + 1]
                 y = self.data["y"][:frame + 1]
+                
+                # adjust scale
                 xmin,xmax = line.axes.get_xlim()
                 ymin,ymax = line.axes.get_ylim()
+                scaled = False
                 if x[-1] > xmax:
-                    line.axes.set_xlim(xmin,xmax*2)
-                    t = np.linspace(0,xmax*2,5)
-                    line.axes.set_xticks(t)
-                    line.axes.set_xticklabels(t)
-                    line.axes.grid(True)
-                    line.set_data(x, y)
+                    line.axes.set_xlim(xmin,x[-1] * self.zoom_step)
+                    scaled = True
+                if y[-1] > ymax:
+                    line.axes.set_ylim(ymin,y[-1] * self.zoom_step)
+                    scaled = True
+                if y[-1] < ymin:
+                    line.axes.set_ylim(y[-1] * self.zoom_step , ymax)
+                    scaled = True
+                if scaled:
                     self._figure.canvas.draw_idle()
-                    
+
                 self._figure.canvas.flush_events()
                 line.set_data(x, y)
                 return [line]
@@ -64,14 +69,14 @@ class Viewer(tk.Frame):
         
         self._play_btn = tk.Button(self.master,text="pause")
         self._play_btn.configure(command=lambda : toggle())
-        self._play_btn.grid(row=self.index+1,columns=1)
+        self._play_btn.grid(row=self.order+1,columns=1)
 
         self._figure.canvas.draw_idle()
-        self._figure.canvas.get_tk_widget().grid(row=self.index+1,columns=1,sticky = 'nswe')
+        self._figure.canvas.get_tk_widget().grid(row=self.order+1,columns=1,sticky = 'nswe')
 
         def control(e):
             
-            # self._figure.canvas.mpl_disconnect
+            # self._figure.canvas.mpl_disconnect(cid)
             def pan():
                 self._figure.axes[0].start_pan(1,e.xdata,e.ydata)
                 
@@ -82,45 +87,37 @@ class Viewer(tk.Frame):
                 # self._figure.canvas.mpl_connect('button_release_event', drag)
 
             def zoom_out():
-                # self._figure.axes[0].set_xlim(0,20)
-                # line.axes.set_xlim(0,30)
-                # line.axes.set_xticklabels(range(0,20))
-                # line.axes.set_xticks(range(0,20))
-                # line.axes.set_xticks(range(0,30,10))
-                # line.axes.set_xticklabels(range(0,30,10))
                 xmin,xmax = line.axes.get_xlim()
                 ymin,ymax = line.axes.get_ylim()
-                if self.scale > 1 :
-                    self.scale = self.scale - 1
-                line.axes.set_xlim(self.scale * xmin,self.scale * xmax)
-                line.axes.set_ylim(self.scale * ymin,self.scale * ymax)
             
+                line.axes.set_xlim(xmin * self.zoom_step, xmax * self.zoom_step)
+                line.axes.set_ylim(ymin * self.zoom_step, ymax * self.zoom_step)
+                
             def zoom_in():
                 xmin,xmax = line.axes.get_xlim()
                 ymin,ymax = line.axes.get_ylim()
-                self.scale = self.scale + 1    
-                line.axes.set_xlim(e.xdata/2,e.xdata*2)
-                line.axes.set_ylim(e.ydata/2,e.ydata*2)
+                
+                line.axes.set_xlim(xmin / self.zoom_step, xmax / self.zoom_step)
+                line.axes.set_ylim(ymin / self.zoom_step, ymax / self.zoom_step)
+                
                 # line.axes.set_xlim(xmin / self.scale , xmax / self.scale)
                 # line.axes.set_ylim(ymin / self.scale, ymax / self.scale)
                 # self._figure.canvas.flush_events()
                 # self._figure.axes[0].callbacks.connect('xlim_changed', lambda event: self._animation._blit_cache.clear())
                 # self._figure.axes[0].callbacks.connect('ylim_changed', lambda event: self._animation._blit_cache.clear())
             
-            control_mapping = {
+            cursor_control_mapping = {
                 "plus":zoom_in,
                 "circle":zoom_out,
                 "fleur":pan
             }
+            cursor = self.master.children["!application"].get_cursor()
             
-            app = self.master.children["!application"]
-            if app.get_cursor() == "arrow":
-                print("arr")
-            else:
-                control_mapping[app.get_cursor()]()
+            if cursor_control_mapping.get(cursor) is not None:
+                cursor_control_mapping[cursor]()
             
             self._figure.canvas.draw_idle()
-        
+            self._figure.canvas.flush_events()
         self.cid = self._figure.canvas.mpl_connect('button_press_event', control)
         
         
@@ -143,18 +140,6 @@ class Viewer(tk.Frame):
     def play(self):
         self._animation.event_source.start()
         self._play = True
-
-    def control(self,e):
-        control_mapping = {
-            "plus":self.zoom_in,
-            "circle":self.zoom_out,
-            "fleur":self.pan
-        }
-        app = self.master.children["!application"]
-        if app.get_cursor() == "arrow":
-            print("arr")
-        else:
-            control_mapping[app.get_cursor()]()
     
     def cleanup(self):    
         self.pause()
