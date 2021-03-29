@@ -1,5 +1,4 @@
 import tkinter as tk
-import numpy as np
 from matplotlib.pyplot import rcParams
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -34,17 +33,17 @@ class Viewer(tk.Frame):
                 y = self.data["y"][:frame + 1]
                 
                 # adjust scale
-                xmin,xmax = line.axes.get_xlim()
-                ymin,ymax = line.axes.get_ylim()
+                xmin,xmax = self._figure.axes[0].get_xlim()
+                ymin,ymax = self._figure.axes[0].get_ylim()
                 scaled = False
                 if x[-1] > xmax:
-                    line.axes.set_xlim(xmin,x[-1] * self.zoom_step)
+                    self._figure.axes[0].set_xlim(xmin,x[-1] * self.zoom_step)
                     scaled = True
                 if y[-1] > ymax:
-                    line.axes.set_ylim(ymin,y[-1] * self.zoom_step)
+                    self._figure.axes[0].set_ylim(ymin,y[-1] * self.zoom_step)
                     scaled = True
                 if y[-1] < ymin:
-                    line.axes.set_ylim(y[-1] * self.zoom_step , ymax)
+                    self._figure.axes[0].set_ylim(y[-1] * self.zoom_step , ymax)
                     scaled = True
                 if scaled:
                     self._figure.canvas.draw_idle()
@@ -72,10 +71,20 @@ class Viewer(tk.Frame):
         self._play_btn.grid(row=self.order+1,columns=1)
 
         self._figure.canvas.draw_idle()
-        self._figure.canvas.get_tk_widget().grid(row=self.order+1,columns=1,sticky = 'nswe')
+        self._figure.canvas.get_tk_widget().grid(row=self.order+1,columns=1,sticky = 'nswe')        
 
-        def control(e):
-            
+    def add_plot(self):
+        # inches to pixel conversion    
+        px = 1/rcParams['figure.dpi']
+        self._figure = Figure(figsize=((self.master.winfo_screenwidth())*px, (self.master.winfo_screenheight())*px),constrained_layout=True)
+        FigureCanvasTkAgg(self._figure, master=self.master)
+        
+        self.__render_plot()
+        
+        self.__register_event_listeners()
+        
+    def __register_event_listeners(self):
+        def cursor_control(e):         
             # self._figure.canvas.mpl_disconnect(cid)
             def pan():
                 self._figure.axes[0].start_pan(1,e.xdata,e.ydata)
@@ -87,21 +96,21 @@ class Viewer(tk.Frame):
                 # self._figure.canvas.mpl_connect('button_release_event', drag)
 
             def zoom_out():
-                xmin,xmax = line.axes.get_xlim()
-                ymin,ymax = line.axes.get_ylim()
+                ymin,ymax = self._figure.axes[0].get_ylim()
+                xmin,xmax = self._figure.axes[0].get_xlim()
             
-                line.axes.set_xlim(xmin * self.zoom_step, xmax * self.zoom_step)
-                line.axes.set_ylim(ymin * self.zoom_step, ymax * self.zoom_step)
+                self._figure.axes[0].set_xlim(xmin * self.zoom_step, xmax * self.zoom_step)
+                self._figure.axes[0].set_ylim(ymin * self.zoom_step, ymax * self.zoom_step)
                 
             def zoom_in():
-                xmin,xmax = line.axes.get_xlim()
-                ymin,ymax = line.axes.get_ylim()
+                xmin,xmax = self._figure.axes[0].get_xlim()
+                ymin,ymax = self._figure.axes[0].get_ylim()
                 
-                line.axes.set_xlim(xmin / self.zoom_step, xmax / self.zoom_step)
-                line.axes.set_ylim(ymin / self.zoom_step, ymax / self.zoom_step)
+                self._figure.axes[0].set_xlim(xmin / self.zoom_step, xmax / self.zoom_step)
+                self._figure.axes[0].set_ylim(ymin / self.zoom_step, ymax / self.zoom_step)
                 
-                # line.axes.set_xlim(xmin / self.scale , xmax / self.scale)
-                # line.axes.set_ylim(ymin / self.scale, ymax / self.scale)
+                # self._figure.axes[0].set_xlim(xmin / self.scale , xmax / self.scale)
+                # self._figure.axes[0].set_ylim(ymin / self.scale, ymax / self.scale)
                 # self._figure.canvas.flush_events()
                 # self._figure.axes[0].callbacks.connect('xlim_changed', lambda event: self._animation._blit_cache.clear())
                 # self._figure.axes[0].callbacks.connect('ylim_changed', lambda event: self._animation._blit_cache.clear())
@@ -118,19 +127,8 @@ class Viewer(tk.Frame):
             
             self._figure.canvas.draw_idle()
             self._figure.canvas.flush_events()
-        self.cid = self._figure.canvas.mpl_connect('button_press_event', control)
-        
-        
 
-    
-    def add_plot(self):
-        # inches to pixel conversion    
-        px = 1/rcParams['figure.dpi']
-        self._figure = Figure(figsize=((self.master.winfo_screenwidth())*px, (self.master.winfo_screenheight())*px),constrained_layout=True)
-        FigureCanvasTkAgg(self._figure, master=self.master)
-        
-        self.__render_plot()
-        
+        self._figure.canvas.mpl_connect('button_press_event', cursor_control)
 
         
     def pause(self):
