@@ -1,10 +1,20 @@
 from tkinter import filedialog
-from helpers import read_file
 
 class File_Explorer():
-    
     @staticmethod
-    def browse_files(root):
+    def save_file(root):
+        filename = filedialog.asksaveasfilename(initialdir = "/",
+                                          title = "Save a File",
+                                          filetypes = (("PDF files",
+                                                        "*.pdf*"),
+                                                       ("all files",
+                                                        "*.*"))) or None
+        if filename is None:
+            return None
+        root.event_generate("<<Filesave>>", data=filename)
+
+    @staticmethod
+    def browse_file(root):
         filename = filedialog.askopenfilename(initialdir = "/",
                                           title = "Select a File",
                                           filetypes = (("EDF files",

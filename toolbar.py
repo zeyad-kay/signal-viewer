@@ -8,12 +8,12 @@ class ToolBar(tk.Frame):
 		# open file button + the icon
 		self.grid(row=0,column=5,sticky="ew")
 		self.openImg = tk.PhotoImage(file="images/folder1.png")
-		self.openButton = tk.Button(self , image=self.openImg , command=lambda : File_Explorer.browse_files(master))
+		self.openButton = tk.Button(self , image=self.openImg , command=lambda : File_Explorer.browse_file(master))
 		self.openButton.grid(row=0 ,column=0,padx=5,pady=3)
 		
 		#save as button + the icon
 		self.saveImg = tk.PhotoImage(file="images/floppy1.png")
-		self.saveAsButton =tk.Button(self , image=self.saveImg , command=self.printing ,borderwidth=1)
+		self.saveAsButton =tk.Button(self , image=self.saveImg , command=lambda : File_Explorer.save_file(master) ,borderwidth=1)
 		self.saveAsButton.grid(row=0 ,column=1,padx=5,pady=3)
 		
 		# #scale button + the icon
@@ -28,8 +28,7 @@ class ToolBar(tk.Frame):
 		self.zoomOutImg = tk.PhotoImage(file="images/zoomOut.png")
 		self.scaleButton = tk.Button(self , image=self.zoomOutImg , command=lambda : self.master.change_cursor("circle"),borderwidth=1)
 		self.scaleButton.grid(row=0 ,column=4,padx=5,pady=3)
-		
-
+	
 	def printing(self):
 		print("printing")
 	
