@@ -85,66 +85,69 @@ class Viewer(tk.Frame):
         self.__register_event_listeners()
         
     def __register_event_listeners(self):
-        def cursor_control(original_event):         
+        
+        self.cursor_listener = self._figure.canvas.mpl_connect('button_press_event', self.__cursor_control)
 
-            def pan():
+
+    def __cursor_control(self,event):
+
+        cursor_control_mapping = {
+            "plus":self.zoom_in,
+            "circle":self.zoom_out,
+            "fleur":self.pan
+        }
+        cursor = self.master.children["!application"].get_cursor()
+        
+        if cursor_control_mapping.get(cursor) is not None:
+            cursor_control_mapping[cursor](event)
+        
+        self._figure.canvas.draw_idle()
+        self._figure.canvas.flush_events()
+    
+    def pan(self,original_event):
                 
-                def release(e):
-                    self._figure.canvas.mpl_disconnect(self.drag_listener)
-                    self._figure.canvas.mpl_disconnect(self.release_listener)
-                
-                def drag(new_event):
-                    xmin,xmax = self._figure.axes[0].get_xlim()
-                    ymin,ymax = self._figure.axes[0].get_ylim()
-                    dx = original_event.xdata - new_event.xdata
-                    dy = original_event.ydata - new_event.ydata
+        def release(new_event):
+            self._figure.canvas.mpl_disconnect(self.drag_listener)
+            self._figure.canvas.mpl_disconnect(self.release_listener)
+        
+        def drag(new_event):
+            xmin,xmax = self._figure.axes[0].get_xlim()
+            ymin,ymax = self._figure.axes[0].get_ylim()
+            dx = original_event.xdata - new_event.xdata
+            dy = original_event.ydata - new_event.ydata
 
-                    self._figure.axes[0].set_xlim(xmin + dx,xmax + dx)
-                    self._figure.axes[0].set_ylim(ymin + dy,ymax + dy)
-                    self._figure.canvas.draw_idle()
+            self._figure.axes[0].set_xlim(xmin + dx,xmax + dx)
+            self._figure.axes[0].set_ylim(ymin + dy,ymax + dy)
+            self._figure.canvas.draw_idle()
 
-                self.drag_listener = self._figure.canvas.mpl_connect("motion_notify_event", drag)
-                self.release_listener = self._figure.canvas.mpl_connect("button_release_event", release)
+        self.drag_listener = self._figure.canvas.mpl_connect("motion_notify_event", drag)
+        self.release_listener = self._figure.canvas.mpl_connect("button_release_event", release)
 
-            def zoom_out():
+
+    def zoom_out(self,event):
                 ymin,ymax = self._figure.axes[0].get_ylim()
                 xmin,xmax = self._figure.axes[0].get_xlim()
             
-                self._figure.axes[0].set_xlim(0, xmax * self.zoom_scale)
-                # self._figure.axes[0].set_xlim(xmin * self.zoom_scale, xmax * self.zoom_scale)
+                self._figure.axes[0].set_xlim(xmin * self.zoom_scale, xmax * self.zoom_scale)
                 self._figure.axes[0].set_ylim(ymin * self.zoom_scale, ymax * self.zoom_scale)
                 # self._figure.canvas.draw_idle()
                 # self._figure.canvas.flush_events()
-                
-            def zoom_in():
-                # self._figure.canvas.flush_events()
-                xmin,xmax = self._figure.axes[0].get_xlim()
-                ymin,ymax = self._figure.axes[0].get_ylim()
-                
-                self._figure.axes[0].set_xlim(xmin / self.zoom_scale, xmax / self.zoom_scale)
-                self._figure.axes[0].set_ylim(ymin / self.zoom_scale, ymax / self.zoom_scale)
-                
-                # self._figure.canvas.draw_idle()
-                
-            cursor_control_mapping = {
-                "plus":zoom_in,
-                "circle":zoom_out,
-                "fleur":pan
-            }
-            cursor = self.master.children["!application"].get_cursor()
-            
-            if cursor_control_mapping.get(cursor) is not None:
-                cursor_control_mapping[cursor]()
-            
-            self._figure.canvas.draw_idle()
-            self._figure.canvas.flush_events()
 
-        self.cursor_listener = self._figure.canvas.mpl_connect('button_press_event', cursor_control)
+    def zoom_in(self,event):
+        # self._figure.canvas.flush_events()
+        xmin,xmax = self._figure.axes[0].get_xlim()
+        ymin,ymax = self._figure.axes[0].get_ylim()
         
+        self._figure.axes[0].set_xlim(xmin / self.zoom_scale, xmax / self.zoom_scale)
+        self._figure.axes[0].set_ylim(ymin / self.zoom_scale, ymax / self.zoom_scale)
+        
+        # self._figure.canvas.draw_idle()
+    
     def pause(self):
         self._animation.event_source.stop()
         self._play = False
         # self._figure.canvas.flush_events()
+    
     def play(self):
         self._animation.event_source.start()
         self._play = True
