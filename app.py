@@ -18,7 +18,7 @@ class Application(tk.Frame):
         self.master.config(menu=MenuBar(self))
 
     def create_toolbar(self):        
-        self.grid(row=0)
+        self.grid(row=0,sticky='w')
         self.toolbar = ToolBar(self)
 
     def get_cursor(self):
@@ -78,9 +78,7 @@ class Application(tk.Frame):
 
 if __name__ == "__main__":
     root = tk.Tk()
-    width = root.winfo_screenwidth() 
-    height = root.winfo_screenheight()
-    root.geometry("%dx%d" % (width, height))
+    root.state('zoomed')
     root.title("Signal Viewer")
     root.configure(background='white')
     app = Application(master=root)
