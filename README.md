@@ -1,5 +1,7 @@
 # Signal Viewer
-This is a desktop GUI for viewing signal files and providing basic functionality like zooming in/out generating spectrograms and pdf reports.
+This is a desktop GUI for viewing edf signal files and providing basic controls for playing, pausing, scrolling, zooming and saving pdf reports for the uploaded signals alongside spectrograms.
+
+Multiple signals can be viewed simultaneously by uploading an edf file, then the GUI syncs the plots.
 
 # Setup
 
@@ -18,3 +20,5 @@ This is a desktop GUI for viewing signal files and providing basic functionality
 ```
 > python app.py
 ```
+
+There is a sample file in the repo *SampleECG.edf* for trying out.
