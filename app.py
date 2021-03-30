@@ -45,36 +45,36 @@ class Application(tk.Frame):
     def create_widgets(self):
         self.create_menubar()
         self.create_toolbar()
-        
-        def plot_signal(filename):
-            self.plots_data.append(read_edf(filename))
-            self.delete_viewers()
-            
-            for i,plot in enumerate(self.plots_data):
-                self.master.rowconfigure(i+1,weight=1)
-                v=self.create_viewer(plot)
-                v.grid(row=i+1,columns=1,sticky = 'nswe')
-                self.viewers.append(v)
-                v.add_plot()
-        
-        def save_signals(filename):
-            if self.viewers.__len__():    
-                try:
-                    t = threading.Thread(target=save_pdf,args=(filename,self.plots_data))
-                    t.run()
-                except Exception as e:
-                    print(e)
 
         # Only way to pass data across events
-        upload_callback = self.master.register(plot_signal)
+        upload_callback = self.master.register(self.plot_signal)
         self.master.call("bind", self.master, "<<Fileupload>>", upload_callback + " %d")
         
-        save_callback = self.master.register(save_signals)
+        save_callback = self.master.register(self.save_signals)
         self.master.call("bind", self.master, "<<Filesave>>", save_callback + " %d")
         
         # Testing
         self.master.event_generate("<KeyPress>")
         self.master.bind("<KeyPress>",lambda e: self.master.event_generate("<<Fileupload>>",data="SampleECG.edf"))
+
+    def plot_signal(self,filename):
+        self.plots_data.append(read_edf(filename))
+        self.delete_viewers()
+        
+        for i,plot in enumerate(self.plots_data):
+            self.master.rowconfigure(i+1,weight=1)
+            v=self.create_viewer(plot)
+            v.grid(row=i+1,columns=1,sticky = 'nswe')
+            self.viewers.append(v)
+            v.add_plot()
+        
+    def save_signals(self,filename):
+        if self.viewers.__len__():    
+            try:
+                t = threading.Thread(target=save_pdf,args=(filename,self.plots_data))
+                t.run()
+            except Exception as e:
+                print(e)
 
 if __name__ == "__main__":
     root = tk.Tk()
