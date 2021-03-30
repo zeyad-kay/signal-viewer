@@ -1,6 +1,5 @@
 import tkinter as tk
 from matplotlib.pyplot import rcParams
-from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from matplotlib.animation import FuncAnimation
@@ -10,7 +9,7 @@ class Viewer(tk.Frame):
         super().__init__(master)
         self.master = master
         self.order = order
-        self.zoom_step = 2
+        self.zoom_scale = 2
         self._play = True
         self.data = data
 
@@ -20,8 +19,9 @@ class Viewer(tk.Frame):
         line = self._figure.axes[0].plot([],[])[0]
         
         def init():
+            line.axes.legend([self.data["label"]])
             line.axes.set_xlim(0,self.data["x"][1000])
-            line.axes.set_ylim(min(self.data["y"]) * self.zoom_step,max(self.data["y"]) * self.zoom_step)
+            line.axes.set_ylim(min(self.data["y"]) * self.zoom_scale,max(self.data["y"]) * self.zoom_scale)
             line.axes.set_xlabel("Time")
             line.axes.set_ylabel("Amplitude")
             line.axes.grid(True)
@@ -37,13 +37,13 @@ class Viewer(tk.Frame):
                 ymin,ymax = self._figure.axes[0].get_ylim()
                 scaled = False
                 if x[-1] > xmax:
-                    self._figure.axes[0].set_xlim(xmin,x[-1] * self.zoom_step)
+                    self._figure.axes[0].set_xlim(xmin,x[-1] * self.zoom_scale)
                     scaled = True
                 if y[-1] > ymax:
-                    self._figure.axes[0].set_ylim(ymin,y[-1] * self.zoom_step)
+                    self._figure.axes[0].set_ylim(ymin,y[-1] * self.zoom_scale)
                     scaled = True
                 if y[-1] < ymin:
-                    self._figure.axes[0].set_ylim(y[-1] * self.zoom_step , ymax)
+                    self._figure.axes[0].set_ylim(y[-1] * self.zoom_scale , ymax)
                     scaled = True
                 if scaled:
                     self._figure.canvas.draw_idle()
@@ -52,7 +52,7 @@ class Viewer(tk.Frame):
                 line.set_data(x, y)
                 return [line]
             except Exception as e:
-                print("---------Err---------")
+                print(e)
      
         def toggle():
             if self._play :
@@ -63,6 +63,7 @@ class Viewer(tk.Frame):
                 self._play_btn["text"] = "pause"
         
         # Setting the Interval too low messes up the the event loop
+        # when there are multiple plots
         self._animation = FuncAnimation(self._figure, update,
             init_func=init, interval=100,blit=True,repeat=False)
         
@@ -84,37 +85,47 @@ class Viewer(tk.Frame):
         self.__register_event_listeners()
         
     def __register_event_listeners(self):
-        def cursor_control(e):         
-            # self._figure.canvas.mpl_disconnect(cid)
-            def pan():
-                self._figure.axes[0].start_pan(1,e.xdata,e.ydata)
-                
-                def drag(ev):
-                    self._figure.axes[0].drag_pan(1,None,ev.xdata,ev.ydata)
-                    print(self._figure.axes[0].get_lines())
+        def cursor_control(original_event):         
 
-                # self._figure.canvas.mpl_connect('button_release_event', drag)
+            def pan():
+                
+                def release(e):
+                    self._figure.canvas.mpl_disconnect(self.drag_listener)
+                    self._figure.canvas.mpl_disconnect(self.release_listener)
+                
+                def drag(new_event):
+                    xmin,xmax = self._figure.axes[0].get_xlim()
+                    ymin,ymax = self._figure.axes[0].get_ylim()
+                    dx = original_event.xdata - new_event.xdata
+                    dy = original_event.ydata - new_event.ydata
+
+                    self._figure.axes[0].set_xlim(xmin + dx,xmax + dx)
+                    self._figure.axes[0].set_ylim(ymin + dy,ymax + dy)
+                    self._figure.canvas.draw_idle()
+
+                self.drag_listener = self._figure.canvas.mpl_connect("motion_notify_event", drag)
+                self.release_listener = self._figure.canvas.mpl_connect("button_release_event", release)
 
             def zoom_out():
                 ymin,ymax = self._figure.axes[0].get_ylim()
                 xmin,xmax = self._figure.axes[0].get_xlim()
             
-                self._figure.axes[0].set_xlim(xmin * self.zoom_step, xmax * self.zoom_step)
-                self._figure.axes[0].set_ylim(ymin * self.zoom_step, ymax * self.zoom_step)
+                self._figure.axes[0].set_xlim(0, xmax * self.zoom_scale)
+                # self._figure.axes[0].set_xlim(xmin * self.zoom_scale, xmax * self.zoom_scale)
+                self._figure.axes[0].set_ylim(ymin * self.zoom_scale, ymax * self.zoom_scale)
+                # self._figure.canvas.draw_idle()
+                # self._figure.canvas.flush_events()
                 
             def zoom_in():
+                # self._figure.canvas.flush_events()
                 xmin,xmax = self._figure.axes[0].get_xlim()
                 ymin,ymax = self._figure.axes[0].get_ylim()
                 
-                self._figure.axes[0].set_xlim(xmin / self.zoom_step, xmax / self.zoom_step)
-                self._figure.axes[0].set_ylim(ymin / self.zoom_step, ymax / self.zoom_step)
+                self._figure.axes[0].set_xlim(xmin / self.zoom_scale, xmax / self.zoom_scale)
+                self._figure.axes[0].set_ylim(ymin / self.zoom_scale, ymax / self.zoom_scale)
                 
-                # self._figure.axes[0].set_xlim(xmin / self.scale , xmax / self.scale)
-                # self._figure.axes[0].set_ylim(ymin / self.scale, ymax / self.scale)
-                # self._figure.canvas.flush_events()
-                # self._figure.axes[0].callbacks.connect('xlim_changed', lambda event: self._animation._blit_cache.clear())
-                # self._figure.axes[0].callbacks.connect('ylim_changed', lambda event: self._animation._blit_cache.clear())
-            
+                # self._figure.canvas.draw_idle()
+                
             cursor_control_mapping = {
                 "plus":zoom_in,
                 "circle":zoom_out,
@@ -128,13 +139,12 @@ class Viewer(tk.Frame):
             self._figure.canvas.draw_idle()
             self._figure.canvas.flush_events()
 
-        self._figure.canvas.mpl_connect('button_press_event', cursor_control)
-
+        self.cursor_listener = self._figure.canvas.mpl_connect('button_press_event', cursor_control)
         
     def pause(self):
         self._animation.event_source.stop()
         self._play = False
-
+        # self._figure.canvas.flush_events()
     def play(self):
         self._animation.event_source.start()
         self._play = True
