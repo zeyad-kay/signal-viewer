@@ -24,7 +24,7 @@ class Application(tk.Frame):
     def get_cursor(self):
         return self.pointer
     
-    def change_cursor(self,ctype):
+    def set_cursor(self,ctype):
         if self.pointer != ctype:
             self.pointer = ctype
         else:

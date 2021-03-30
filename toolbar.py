@@ -18,15 +18,15 @@ class ToolBar(tk.Frame):
 		
 		# #scale button + the icon
 		self.scaleImg = tk.PhotoImage(file="images/pan.png")
-		self.scaleButton = tk.Button(self , image=self.scaleImg , command=lambda : self.master.change_cursor("fleur"),borderwidth=1)
+		self.scaleButton = tk.Button(self , image=self.scaleImg , command=lambda : self.master.set_cursor("fleur"),borderwidth=1)
 		self.scaleButton.grid(row=0 ,column=2,padx=5,pady=3)
 	
 		self.zoomInImg = tk.PhotoImage(file="images/zoomIn.png")
-		self.scaleButton = tk.Button(self , image=self.zoomInImg , command=lambda : self.master.change_cursor("plus"),borderwidth=1)
+		self.scaleButton = tk.Button(self , image=self.zoomInImg , command=lambda : self.master.set_cursor("plus"),borderwidth=1)
 		self.scaleButton.grid(row=0 ,column=3,padx=5,pady=3)
 
 		self.zoomOutImg = tk.PhotoImage(file="images/zoomOut.png")
-		self.scaleButton = tk.Button(self , image=self.zoomOutImg , command=lambda : self.master.change_cursor("circle"),borderwidth=1)
+		self.scaleButton = tk.Button(self , image=self.zoomOutImg , command=lambda : self.master.set_cursor("circle"),borderwidth=1)
 		self.scaleButton.grid(row=0 ,column=4,padx=5,pady=3)
 	
 	def printing(self):
