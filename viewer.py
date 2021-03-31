@@ -110,15 +110,24 @@ class Viewer(tk.Frame):
         
         if cursor_control_mapping.get(cursor) is not None:
             cursor_control_mapping[cursor](event)
-        
-        # self._figure.canvas.draw_idle()
-        # self._figure.canvas.flush_events()
     
     def pan(self,original_event):
                 
         def release(new_event):
             self._figure.canvas.mpl_disconnect(self.drag_listener)
             self._figure.canvas.mpl_disconnect(self.release_listener)
+
+            # Plot a new line with the same data
+            # because for some reason the original line disappears
+            # when zooming on a paused plot        
+            x,y = self._figure.axes[0].get_lines()[0].get_data()
+            self._figure.axes[0].plot(x,y,color="tab:blue")
+        
+            self._figure.canvas.draw_idle()
+            self._figure.canvas.flush_events()
+        
+            # Remove the newly created line but don't update the canvas
+            self._figure.axes[0].get_lines()[-1].remove()
         
         def drag(new_event):
             # In case of scrolling outside the axis
@@ -133,8 +142,10 @@ class Viewer(tk.Frame):
 
             self._figure.axes[0].set_xlim(xmin + dx,xmax + dx)
             self._figure.axes[0].set_ylim(ymin + dy,ymax + dy)
+
             self._figure.canvas.draw_idle()
-            # self._figure.canvas.flush_events()    
+
+        # self._figure.canvas.draw_idle()
 
         self.drag_listener = self._figure.canvas.mpl_connect("motion_notify_event", drag)
         self.release_listener = self._figure.canvas.mpl_connect("button_release_event", release)
