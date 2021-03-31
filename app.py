@@ -52,10 +52,6 @@ class Application(tk.Frame):
         
         save_callback = self.master.register(self.save_signals)
         self.master.call("bind", self.master, "<<Filesave>>", save_callback + " %d")
-        
-        # Testing
-        self.master.event_generate("<KeyPress>")
-        self.master.bind("<KeyPress>",lambda e: self.master.event_generate("<<Fileupload>>",data="SampleECG.edf"))
 
     def plot_signal(self,filename):
         self.plots_data.append(read_edf(filename))
