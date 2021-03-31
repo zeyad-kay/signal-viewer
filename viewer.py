@@ -145,8 +145,6 @@ class Viewer(tk.Frame):
 
             self._figure.canvas.draw_idle()
 
-        # self._figure.canvas.draw_idle()
-
         self.drag_listener = self._figure.canvas.mpl_connect("motion_notify_event", drag)
         self.release_listener = self._figure.canvas.mpl_connect("button_release_event", release)
 
