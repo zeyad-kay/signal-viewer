@@ -27,8 +27,4 @@ class ToolBar(tk.Frame):
 
 		self.zoomOutImg = tk.PhotoImage(file="images/zoomOut.png")
 		self.scaleButton = tk.Button(self , image=self.zoomOutImg, border=0, bg="white" , command=lambda : self.master.set_cursor("circle"))
-		self.scaleButton.grid(row=0 ,column=4,padx=5,pady=3)
-	
-	def printing(self):
-		print("printing")
-	
+		self.scaleButton.grid(row=0 ,column=4,padx=5,pady=3)	
