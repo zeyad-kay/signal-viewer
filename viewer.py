@@ -78,10 +78,10 @@ class Viewer(tk.Frame):
         
     def __register_event_listeners(self):
         self.__add_play_listener()
-        self.__add_cursor_listener()
+        self.__add_mode_listener()
     
-    def __add_cursor_listener(self):
-        self._figure.canvas.mpl_connect('button_press_event', self.__cursor_control)
+    def __add_mode_listener(self):
+        self._figure.canvas.mpl_connect('button_press_event', self.__mode_control)
     
     def __add_play_listener(self):
         def toggle():
@@ -99,17 +99,17 @@ class Viewer(tk.Frame):
         self._play_btn.configure(command=lambda : toggle())
         self._play_btn.grid(row=self.order+1,columns=1)
     
-    def __cursor_control(self,event):
+    def __mode_control(self,event):
 
-        cursor_control_mapping = {
-            "plus":self.zoom_in,
-            "circle":self.zoom_out,
-            "fleur":self.pan
+        mode_control_mapping = {
+            "zoomIn":self.zoom_in,
+            "zoomOut":self.zoom_out,
+            "pan":self.pan
         }
-        cursor = self.master.children["!application"].get_cursor()
+        mode = self.master.children["!application"].get_mode()
         
-        if cursor_control_mapping.get(cursor) is not None:
-            cursor_control_mapping[cursor](event)
+        if mode_control_mapping.get(mode) is not None:
+            mode_control_mapping[mode](event)
     
     def pan(self,original_event):
                 

@@ -14,7 +14,7 @@ class File_Explorer():
         root.event_generate("<<Filesave>>", data=filename)
 
     @staticmethod
-    def browse_file(root):
+    def open_file(root):
         filename = filedialog.askopenfilename(initialdir = "/",
                                           title = "Select a File",
                                           filetypes = (("EDF files",

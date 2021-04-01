@@ -9,7 +9,7 @@ class Application(tk.Frame):
     def __init__(self,master=None):
         super().__init__(master)
         self.master = master
-        self.pointer = "arrow"
+        self._mode = None
         self.viewers = []
         self.plots_data = []
         self.create_widgets()
@@ -20,20 +20,35 @@ class Application(tk.Frame):
     def create_toolbar(self):        
         self.grid(row=0,sticky='w')
         self.toolbar = ToolBar(self)
-
-    def get_cursor(self):
-        return self.pointer
     
-    def set_cursor(self,ctype):
-        if self.pointer != ctype:
-            self.pointer = ctype
+    def set_mode(self,mode):
+        # Reset mode if it is already selected
+        if self._mode == mode: 
+            self._mode = None
         else:
-            self.pointer = "arrow"
-        self.master.config(cursor=self.pointer)
+            self._mode = mode
+        self.set_cursor(self._mode)
+    
+    def get_mode(self):
+        return self._mode
+    
+    # def get_cursor(self):
+    #     return self._cursor
+    
+    def set_cursor(self,mode):
+        cursor_mode_mapping = {
+            "zoomIn":"plus",
+            "zoomOut":"circle",
+            "pan":"fleur"
+        }
+        if mode is None:
+            cursor = "arrow"
+        else:
+            cursor = cursor_mode_mapping[mode]
+        self.master.config(cursor=cursor)
 
     def create_viewer(self,data):
-        viewer = Viewer(self.master,self.viewers.__len__(),data)
-        return viewer
+        return Viewer(self.master,self.viewers.__len__(),data)
     
     def delete_viewers(self):
         for viewer in self.viewers:
@@ -47,13 +62,13 @@ class Application(tk.Frame):
         self.create_toolbar()
 
         # Only way to pass data across events
-        upload_callback = self.master.register(self.plot_signal)
+        upload_callback = self.master.register(self.plot_signals)
         self.master.call("bind", self.master, "<<Fileupload>>", upload_callback + " %d")
         
         save_callback = self.master.register(self.save_signals)
         self.master.call("bind", self.master, "<<Filesave>>", save_callback + " %d")
 
-    def plot_signal(self,filename):
+    def plot_signals(self,filename):
         self.plots_data.append(read_edf(filename))
         self.delete_viewers()
         
