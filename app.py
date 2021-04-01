@@ -32,9 +32,6 @@ class Application(tk.Frame):
     def get_mode(self):
         return self._mode
     
-    # def get_cursor(self):
-    #     return self._cursor
-    
     def set_cursor(self,mode):
         cursor_mode_mapping = {
             "zoomIn":"plus",
