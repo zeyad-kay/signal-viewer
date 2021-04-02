@@ -4,6 +4,10 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 def read_edf(filename):
+    """
+    Return a dictionary containing the samples, time, frequency, and label
+    of an EDF file.
+    """
     f= pyedflib.EdfReader(filename)
     label = f.getSignalLabels()[0]
     freq = f.getSampleFrequency(0)
@@ -17,6 +21,9 @@ def read_edf(filename):
     }
 
 def save_pdf(filename,plots=[]):
+    """
+    Write a PDF file of the plots and their spectrograms.
+    """
     with PdfPages(filename + ".pdf") as pdf:
         fig,axs = plt.subplots(ncols=2,nrows=plots.__len__(),constrained_layout=True)
 

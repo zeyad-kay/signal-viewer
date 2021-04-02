@@ -14,6 +14,21 @@ class Application(tk.Frame):
         self.plots_data = []
         self.create_widgets()
 
+    def create_widgets(self):
+        """
+        Create all initial components and listen for Fileupload and Filesave events.
+        """
+        self.create_menubar()
+        self.create_toolbar()
+
+        # Start listening for file upload and save events
+        # Only way to pass data across events
+        upload_callback = self.master.register(self.plot_signals)
+        self.master.call("bind", self.master, "<<Fileupload>>", upload_callback + " %d")
+        
+        save_callback = self.master.register(self.save_signals)
+        self.master.call("bind", self.master, "<<Filesave>>", save_callback + " %d")
+        
     def create_menubar(self):
         self.master.config(menu=MenuBar(self))
 
@@ -21,6 +36,47 @@ class Application(tk.Frame):
         self.grid(row=0,sticky='w')
         self.toolbar = ToolBar(self)
     
+    def create_viewer(self,data):
+        v = Viewer(self.master,self.viewers.__len__(),data)
+        
+        self.master.rowconfigure(self.viewers.__len__()+1,weight=1)
+        v.grid(row=self.viewers.__len__()+1,columns=1,sticky = 'nswe')
+        
+        v.draw()
+        self.viewers.append(v)
+            
+    def delete_viewers(self):
+        """
+        Reset the screen by deleting all plots.
+        """
+        # Stops animation before deleting the plot
+        # Needs some smoothing up!!
+        for viewer in self.viewers:
+            viewer.cleanup()
+        
+        self.viewers = []
+    
+    def plot_signals(self,filename):
+        """
+        Iterate over loaded data and draw the plots
+        """
+        self.plots_data.append(read_edf(filename))
+        self.delete_viewers()
+        
+        for i,plot in enumerate(self.plots_data):
+            self.create_viewer(plot)
+    
+    def save_signals(self,filename):
+        """
+        Wrapper for saving the plots on another thread. 
+        """
+        if self.viewers.__len__():    
+            try:
+                t = threading.Thread(target=save_pdf,args=(filename,self.plots_data))
+                t.run()
+            except Exception as e:
+                print(e) 
+
     def set_mode(self,mode):
         # Reset mode if it is already selected
         if self._mode == mode: 
@@ -43,46 +99,6 @@ class Application(tk.Frame):
         else:
             cursor = cursor_mode_mapping[mode]
         self.master.config(cursor=cursor)
-
-    def create_viewer(self,data):
-        return Viewer(self.master,self.viewers.__len__(),data)
-    
-    def delete_viewers(self):
-        for viewer in self.viewers:
-            # Stops animation before deleting the plot
-            # Needs some smoothing up!!
-            viewer.cleanup()
-        self.viewers = []
-
-    def create_widgets(self):
-        self.create_menubar()
-        self.create_toolbar()
-
-        # Only way to pass data across events
-        upload_callback = self.master.register(self.plot_signals)
-        self.master.call("bind", self.master, "<<Fileupload>>", upload_callback + " %d")
-        
-        save_callback = self.master.register(self.save_signals)
-        self.master.call("bind", self.master, "<<Filesave>>", save_callback + " %d")
-
-    def plot_signals(self,filename):
-        self.plots_data.append(read_edf(filename))
-        self.delete_viewers()
-        
-        for i,plot in enumerate(self.plots_data):
-            self.master.rowconfigure(i+1,weight=1)
-            v=self.create_viewer(plot)
-            v.grid(row=i+1,columns=1,sticky = 'nswe')
-            self.viewers.append(v)
-            v.add_plot()
-        
-    def save_signals(self,filename):
-        if self.viewers.__len__():    
-            try:
-                t = threading.Thread(target=save_pdf,args=(filename,self.plots_data))
-                t.run()
-            except Exception as e:
-                print(e)
 
 if __name__ == "__main__":
     root = tk.Tk()

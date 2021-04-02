@@ -5,6 +5,9 @@ from matplotlib.figure import Figure
 from matplotlib.animation import FuncAnimation
 
 class Viewer(tk.Frame):
+    """
+    Visual component for viewing data on a Matplotlib Figure. 
+    """
     def __init__(self,master=None,order=0,data={}):
         super().__init__(master)
         self.master = master
@@ -12,9 +15,28 @@ class Viewer(tk.Frame):
         self.zoom_scale = 2
         self._play = True
         self.data = data
+        self.modes = {
+            "zoomIn":self.zoom_in,
+            "zoomOut":self.zoom_out,
+            "pan":self.pan
+        }
 
-    def __render_plot(self):
+    def draw(self,interval=0.1):
+        """
+        Draw the plot onto the screen and initialize all controls.
+        """
+        # inches to pixel conversion    
+        px = 1/rcParams['figure.dpi']
+        self._figure = Figure(figsize=((self.master.winfo_screenwidth())*px, (self.master.winfo_screenheight())*px),constrained_layout=True)
+        FigureCanvasTkAgg(self._figure, master=self.master)
         
+        self.__animate_plot(interval)
+        self.__register_event_listeners()
+        
+    def __animate_plot(self,interval):
+        """
+        Animates the drawing of the plot based on an interval of seconds
+        """
         self._figure.subplots(1,1)
         line = self._figure.axes[0].plot([],[])[0]
         
@@ -61,29 +83,29 @@ class Viewer(tk.Frame):
         # Setting the Interval too low messes up the the event loop
         # when there are multiple plots
         self._animation = FuncAnimation(self._figure, update,
-            init_func=init, interval=100,blit=True,repeat=False)
+            init_func=init, interval=interval*1000,blit=True,repeat=False)
         
         # Initial draw
         self._figure.canvas.draw_idle()
         self._figure.canvas.get_tk_widget().grid(row=self.order+1,columns=1,sticky = 'nswe')        
-
-    def add_plot(self):
-        # inches to pixel conversion    
-        px = 1/rcParams['figure.dpi']
-        self._figure = Figure(figsize=((self.master.winfo_screenwidth())*px, (self.master.winfo_screenheight())*px),constrained_layout=True)
-        FigureCanvasTkAgg(self._figure, master=self.master)
-        
-        self.__render_plot()
-        self.__register_event_listeners()
-        
+  
     def __register_event_listeners(self):
+        """
+        Register all events for controlling the plot.
+        """
         self.__add_play_listener()
         self.__add_mode_listener()
     
     def __add_mode_listener(self):
+        """
+        Listen to Mouse press events on the Figure.
+        """
         self._figure.canvas.mpl_connect('button_press_event', self.__mode_control)
     
     def __add_play_listener(self):
+        """
+        Create a Button for playing and pausing the plot.
+        """
         def toggle():
             if self._play :
                 self.pause()
@@ -100,16 +122,14 @@ class Viewer(tk.Frame):
         self._play_btn.grid(row=self.order+1,columns=1)
     
     def __mode_control(self,event):
-
-        mode_control_mapping = {
-            "zoomIn":self.zoom_in,
-            "zoomOut":self.zoom_out,
-            "pan":self.pan
-        }
+        """
+        Execute a function based on the current mode.
+        Supported modes are zooming and panning.
+        """
         mode = self.master.children["!application"].get_mode()
         
-        if mode_control_mapping.get(mode) is not None:
-            mode_control_mapping[mode](event)
+        if self.modes.get(mode) is not None:
+            self.modes[mode](event)
     
     def pan(self,original_event):
                 
@@ -196,6 +216,9 @@ class Viewer(tk.Frame):
         self._play = True
         self._figure.canvas.flush_events()
     
-    def cleanup(self):    
+    def cleanup(self):
+        """
+        Pause all animations and destroy the Viewer
+        """   
         self.pause()
         self.destroy()
