@@ -54,7 +54,7 @@ class Application(tk.Frame):
         """
         Iterate over loaded data and draw the plots
         """
-        self.delete_viewers()
+        self.clear_plots()
         
         for i,plot in enumerate(self.plots_data):
             self.create_viewer(plot)
