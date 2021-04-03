@@ -1,4 +1,6 @@
 from tkinter import filedialog
+from helpers import read_edf,save_pdf
+import threading
 
 class File_Explorer():
     """
@@ -7,7 +9,7 @@ class File_Explorer():
     @staticmethod
     def save_file(root):
         """
-        Generate a Filesave event when the user chooses to save a file
+        Save a PDF file on another thread.
         """
         filename = filedialog.asksaveasfilename(initialdir = "/",
                                           title = "Save a File",
@@ -18,12 +20,12 @@ class File_Explorer():
         if filename is None:
             return None
         
-        root.event_generate("<<Filesave>>", data=filename)
+        threading.Thread(target=save_pdf,args=(filename,root.plots_data)).run()
 
     @staticmethod
     def open_file(root):
         """
-        Generate a Fileupload event when the user chooses to open a file
+        Read data from EDF file and generate a Fileupload event.
         """
         filename = filedialog.askopenfilename(initialdir = "/",
                                           title = "Select a File",
@@ -35,4 +37,5 @@ class File_Explorer():
         if filename is None:
             return None
         
+        root.plots_data.append(read_edf(filename))
         root.event_generate("<<Fileupload>>", data=filename)

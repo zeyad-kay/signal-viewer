@@ -1,9 +1,7 @@
-from helpers import read_edf,save_pdf
 import tkinter as tk
 from toolbar import ToolBar
 from menu import MenuBar
 from viewer import Viewer
-import threading
 
 class Application(tk.Frame):
     def __init__(self,master=None):
@@ -16,18 +14,14 @@ class Application(tk.Frame):
 
     def create_widgets(self):
         """
-        Create all initial components and listen for Fileupload and Filesave events.
+        Create all initial components and listen for Fileupload event.
         """
         self.create_menubar()
         self.create_toolbar()
 
-        # Start listening for file upload and save events
-        # Only way to pass data across events
-        upload_callback = self.master.register(self.plot_signals)
-        self.master.call("bind", self.master, "<<Fileupload>>", upload_callback + " %d")
-        
-        save_callback = self.master.register(self.save_signals)
-        self.master.call("bind", self.master, "<<Filesave>>", save_callback + " %d")
+        # Start listening for file upload event
+        # to start plotting the signals
+        self.master.bind("<<Fileupload>>",self.plot_signals)
         
     def create_menubar(self):
         self.master.config(menu=MenuBar(self))
@@ -56,26 +50,14 @@ class Application(tk.Frame):
         
         self.viewers = []
     
-    def plot_signals(self,filename):
+    def plot_signals(self,e):
         """
         Iterate over loaded data and draw the plots
         """
-        self.plots_data.append(read_edf(filename))
         self.delete_viewers()
         
         for i,plot in enumerate(self.plots_data):
             self.create_viewer(plot)
-    
-    def save_signals(self,filename):
-        """
-        Wrapper for saving the plots on another thread. 
-        """
-        if self.viewers.__len__():    
-            try:
-                t = threading.Thread(target=save_pdf,args=(filename,self.plots_data))
-                t.run()
-            except Exception as e:
-                print(e) 
 
     def set_mode(self,mode):
         # Reset mode if it is already selected
