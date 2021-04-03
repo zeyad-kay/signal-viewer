@@ -39,7 +39,7 @@ class Application(tk.Frame):
         v.draw()
         self.viewers.append(v)
             
-    def delete_viewers(self):
+    def clear_plots(self):
         """
         Reset the screen by deleting all plots.
         """
