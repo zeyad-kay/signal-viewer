@@ -41,7 +41,7 @@ class Viewer(tk.Frame):
         if animate:
             self.__animate_plot(interval)
         else:
-            self._figure.axes[0].plot(self.data["x"],self.data["y"])
+            self._figure.axes[0].plot(self.data["x"],self.data["y"],color="blue")
 
         # Initial draw
         self._figure.canvas.draw_idle()
@@ -53,7 +53,7 @@ class Viewer(tk.Frame):
         """
         Animates the drawing of the plot based on an interval of seconds
         """
-        line = self._figure.axes[0].plot([],[])[0]
+        line = self._figure.axes[0].plot(self.data["x"][900],self.data["y"][900],color="blue")[0]
         
         def init():
             line.axes.legend([self.data["label"]])
@@ -97,7 +97,7 @@ class Viewer(tk.Frame):
         
         # Setting the Interval too low messes up the the event loop
         # when there are multiple plots
-        self._animation = FuncAnimation(self._figure, update,
+        self._animation = FuncAnimation(self._figure, update,frames=range(900,self.data["y"].__len__()),
             init_func=init, interval=interval*1000,blit=True,repeat=False)
   
     def __register_event_listeners(self):
@@ -154,7 +154,7 @@ class Viewer(tk.Frame):
             # because for some reason the original line disappears
             # when zooming on a paused plot        
             x,y = self._figure.axes[0].get_lines()[0].get_data()
-            self._figure.axes[0].plot(x,y,color="tab:blue")
+            self._figure.axes[0].plot(x,y,color="blue")
         
             self._figure.canvas.draw_idle()
             self._figure.canvas.flush_events()
@@ -173,7 +173,11 @@ class Viewer(tk.Frame):
             dx = original_event.xdata - x
             dy = original_event.ydata - y
 
-            self._figure.axes[0].set_xlim(xmin + dx,xmax + dx)
+            if xmin + dx < 0:
+                self._figure.axes[0].set_xlim(0,xmax)
+            else:
+                self._figure.axes[0].set_xlim(xmin + dx,xmax + dx)
+            
             self._figure.axes[0].set_ylim(ymin + dy,ymax + dy)
 
             self._figure.canvas.draw_idle()
@@ -192,7 +196,7 @@ class Viewer(tk.Frame):
         # because for some reason the original line disappears
         # when zooming on a paused plot
         x,y = self._figure.axes[0].get_lines()[0].get_data()
-        self._figure.axes[0].plot(x,y,color="tab:blue")
+        self._figure.axes[0].plot(x,y,color="blue")
         
         self._figure.canvas.draw_idle()
         self._figure.canvas.flush_events()
@@ -211,7 +215,7 @@ class Viewer(tk.Frame):
         # because for some reason the original line disappears
         # when zooming on a paused plot        
         x,y = self._figure.axes[0].get_lines()[0].get_data()
-        self._figure.axes[0].plot(x,y,color="tab:blue")
+        self._figure.axes[0].plot(x,y,color="blue")
         
         self._figure.canvas.draw_idle()
         self._figure.canvas.flush_events()
