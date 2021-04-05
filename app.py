@@ -36,7 +36,7 @@ class Application(tk.Frame):
         self.master.rowconfigure(self.viewers.__len__()+1,weight=1)
         v.grid(row=self.viewers.__len__()+1,columns=1,sticky = 'nswe')
         
-        v.draw()
+        v.draw(animate=True,interval=0.1,spectrogram=True)
         self.viewers.append(v)
             
     def clear_plots(self):

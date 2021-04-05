@@ -15,13 +15,14 @@ class Viewer(tk.Frame):
         self.zoom_scale = 2
         self._play = True
         self.data = data
+        self._animation = None
         self.modes = {
             "zoomIn":self.zoom_in,
             "zoomOut":self.zoom_out,
             "pan":self.pan
         }
 
-    def draw(self,interval=0.1):
+    def draw(self,animate=True,interval=0.1,spectrogram=False):
         """
         Draw the plot onto the screen and initialize all controls.
         """
@@ -30,14 +31,28 @@ class Viewer(tk.Frame):
         self._figure = Figure(figsize=((self.master.winfo_screenwidth())*px, (self.master.winfo_screenheight())*px),constrained_layout=True)
         FigureCanvasTkAgg(self._figure, master=self.master)
         
-        self.__animate_plot(interval)
+            
+        if spectrogram:
+            self._figure.subplots(1,2)
+            self._figure.axes[1].specgram(self.data["y"],self.data["freq"])
+        else:
+            self._figure.subplots(1,1)
+
+        if animate:
+            self.__animate_plot(interval)
+        else:
+            self._figure.axes[0].plot(self.data["x"],self.data["y"])
+
+        # Initial draw
+        self._figure.canvas.draw_idle()
+        self._figure.canvas.get_tk_widget().grid(row=self.order+1,columns=1,sticky = 'nswe')
+        
         self.__register_event_listeners()
         
     def __animate_plot(self,interval):
         """
         Animates the drawing of the plot based on an interval of seconds
         """
-        self._figure.subplots(1,1)
         line = self._figure.axes[0].plot([],[])[0]
         
         def init():
@@ -84,16 +99,14 @@ class Viewer(tk.Frame):
         # when there are multiple plots
         self._animation = FuncAnimation(self._figure, update,
             init_func=init, interval=interval*1000,blit=True,repeat=False)
-        
-        # Initial draw
-        self._figure.canvas.draw_idle()
-        self._figure.canvas.get_tk_widget().grid(row=self.order+1,columns=1,sticky = 'nswe')        
   
     def __register_event_listeners(self):
         """
         Register all events for controlling the plot.
         """
-        self.__add_play_listener()
+        if self._animation:
+            self.__add_play_listener()
+        
         self.__add_mode_listener()
     
     def __add_mode_listener(self):
