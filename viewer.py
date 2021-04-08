@@ -4,88 +4,123 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from matplotlib.animation import FuncAnimation
 
+
 class Viewer(tk.Frame):
     """
-    Visual component for viewing data on a Matplotlib Figure. 
+    Visual component for viewing data on a Matplotlib Figure.
     """
-    def __init__(self,master=None,order=0,data={}):
-        super().__init__(master)
+
+    def __init__(self, master=None, data={}, rows=1, columns=1):
+        super().__init__(master,background="white")
         self.master = master
-        self.order = order
         self.zoom_scale = 2
-        self._play = True
+        self.playing = True
         self.data = data
         self._animation = None
         self.modes = {
-            "zoomIn":self.zoom_in,
-            "zoomOut":self.zoom_out,
-            "pan":self.pan
+            "zoomIn": self.zoom_in,
+            "zoomOut": self.zoom_out,
+            "pan": self.pan
         }
+        self.__create_figure(rows, columns)
 
-    def draw(self,animate=True,interval=0.1,spectrogram=False):
+    def __create_figure(self, rows, columns):
+        """
+        Create a matplotlib Figure and initialize the grid.
+        """
+        # inches to pixel conversion
+        px = 1/rcParams['figure.dpi']
+        # self._figure = Figure(figsize=((self.master.winfo_screenwidth(
+        # ))*px, (self.master.winfo_screenheight())*px), constrained_layout=True)
+        self._figure = Figure(figsize=(5, 5), constrained_layout=True)
+        FigureCanvasTkAgg(self._figure, master=self)
+        self._grid = self._figure.add_gridspec(rows, columns)
+        self.columnconfigure(0, weight=1)
+        self._figure.canvas.get_tk_widget().grid(row=0, column=0, sticky='nswe')
+
+        self._figure.canvas.mpl_connect('axes_enter_event', self.listen)
+        self._figure.canvas.mpl_connect(
+            'axes_leave_event', lambda e: self._figure.canvas.mpl_disconnect(self.cid))
+
+    def listen(self, e):
+        self.cid = self._figure.canvas.mpl_connect(
+            'button_press_event', self.__mode_control)
+
+    def spectrogram(self, row, column):
+        try:
+            print("row: ", row)
+            print("column: ", column)
+            self._figure.add_subplot(self._grid[row, column]).specgram(
+                self.data["y"], self.data["freq"])
+            self._figure.canvas.draw_idle()
+            self._figure.canvas.flush_events()
+        except Exception as e:
+            print(e)
+
+    def plot(self, row, column, animated=False, interval=0.1):
         """
         Draw the plot onto the screen and initialize all controls.
+        Support animation given a certain interval of seconds.
         """
-        # inches to pixel conversion    
-        px = 1/rcParams['figure.dpi']
-        self._figure = Figure(figsize=((self.master.winfo_screenwidth())*px, (self.master.winfo_screenheight())*px),constrained_layout=True)
-        FigureCanvasTkAgg(self._figure, master=self.master)
-        
-            
-        if spectrogram:
-            self._figure.subplots(1,2)
-            self._figure.axes[1].specgram(self.data["y"],self.data["freq"])
-        else:
-            self._figure.subplots(1,1)
+        ax = self._figure.add_subplot(self._grid[row, column])
 
-        if animate:
-            self.__animate_plot(interval)
+        if animated:
+            self.__animate_plot(ax, interval)
         else:
-            self._figure.axes[0].plot(self.data["x"],self.data["y"],color="blue")
+            ax.plot(
+                self.data["x"], self.data["y"], color="blue")
+            ax.grid(True)
+            ax.set_xlabel("Time")
+            ax.set_ylabel("Amplitude")
+            ax.set_xlim(0, self.data["x"][1000])
+            ax.set_ylim(
+                min(self.data["y"]), max(self.data["y"]))
 
+        # self._figure.add_subplot(self._grid[1, :])
         # Initial draw
         self._figure.canvas.draw_idle()
-        self._figure.canvas.get_tk_widget().grid(row=self.order+1,columns=1,sticky = 'nswe')
-        
-        self.__register_event_listeners()
-        
-    def __animate_plot(self,interval):
+
+    def __animate_plot(self, ax, interval):
         """
         Animates the drawing of the plot based on an interval of seconds
         """
-        line = self._figure.axes[0].plot(self.data["x"][900],self.data["y"][900],color="blue")[0]
-        
+        line = ax.plot([], [], color="blue")[0]
+
         def init():
-            line.axes.legend([self.data["label"]])
-            line.axes.set_xlim(0,self.data["x"][1000])
-            line.axes.set_ylim(min(self.data["y"]) * self.zoom_scale,max(self.data["y"]) * self.zoom_scale)
+            line.axes.set_xlim(0, self.data["x"][1000])
+            line.axes.set_ylim(
+                min(self.data["y"]) * self.zoom_scale, max(self.data["y"]) * self.zoom_scale)
             line.axes.set_xlabel("Time")
             line.axes.set_ylabel("Amplitude")
             line.axes.grid(True)
             return [line]
-        
+
         def update(frame):
             try:
-                x = self.data["x"][:frame + 1]
-                y = self.data["y"][:frame + 1]
-                
+                if frame * 100 > self.data["y"].__len__():
+                    x = self.data["x"]
+                    y = self.data["y"]
+                else:
+                    x = self.data["x"][:frame * 100]
+                    y = self.data["y"][:frame * 100]
+
                 # adjust scale
-                xmin,xmax = self._figure.axes[0].get_xlim()
-                ymin,ymax = self._figure.axes[0].get_ylim()
+                xmin, xmax = self._figure.axes[0].get_xlim()
+                ymin, ymax = self._figure.axes[0].get_ylim()
                 scaled = False
                 if x[-1] > xmax:
-                    self._figure.axes[0].set_xlim(xmin,x[-1] * self.zoom_scale)
+                    self._figure.axes[0].set_xlim(xmax-1, xmax + 2)
                     scaled = True
-                if y[-1] > ymax:
-                    self._figure.axes[0].set_ylim(ymin,y[-1] * self.zoom_scale)
-                    scaled = True
-                if y[-1] < ymin:
-                    self._figure.axes[0].set_ylim(y[-1] * self.zoom_scale , ymax)
-                    scaled = True
+                # if y[-1] > ymax:
+                #     self._figure.axes[0].set_ylim(ymax,y[-1] * self.zoom_scale)
+                    # scaled = True
+                # if y[-1] < ymin:
+                #     self._figure.axes[0].set_ylim(y[-1] * self.zoom_scale , ymax)
+                #     scaled = True
                 if scaled:
-                    # Should be called whenever the figure changes 
+                    # Should be called whenever the figure changes
                     self._figure.canvas.draw_idle()
-                
+
                 # Always flush to give control back to the GUI event loop
                 # and not freeze the app
                 self._figure.canvas.flush_events()
@@ -93,149 +128,136 @@ class Viewer(tk.Frame):
                 return [line]
             except Exception as e:
                 print(e)
-     
-        
+
         # Setting the Interval too low messes up the the event loop
         # when there are multiple plots
-        self._animation = FuncAnimation(self._figure, update,frames=range(900,self.data["y"].__len__()),
-            init_func=init, interval=interval*1000,blit=True,repeat=False)
-  
-    def __register_event_listeners(self):
-        """
-        Register all events for controlling the plot.
-        """
-        if self._animation:
-            self.__add_play_listener()
-        
-        self.__add_mode_listener()
-    
-    def __add_mode_listener(self):
-        """
-        Listen to Mouse press events on the Figure.
-        """
-        self._figure.canvas.mpl_connect('button_press_event', self.__mode_control)
-    
-    def __add_play_listener(self):
-        """
-        Create a Button for playing and pausing the plot.
-        """
-        def toggle():
-            if self._play :
-                self.pause()
-                self._play_pause_icon = tk.PhotoImage(file="images/play.png")
-            else:
-                self.play()
-                self._play_pause_icon = tk.PhotoImage(file="images/pause.png")
-            self._play_btn["image"] = self._play_pause_icon
-        
-        self._play_pause_icon = tk.PhotoImage(file="images/pause.png")
-        self._play_btn = tk.Button(self.master,bd=0,bg="white")
-        self._play_btn["image"]=self._play_pause_icon
-        self._play_btn.configure(command=lambda : toggle())
-        self._play_btn.grid(row=self.order+1,columns=1)
-    
-    def __mode_control(self,event):
+        self._animation = FuncAnimation(self._figure, update, frames=range(1, int(self.data["y"].__len__()/100) + 1),
+                                        init_func=init, interval=interval*1000, blit=True, repeat=False)
+        # self._animation = FuncAnimation(self._figure, update,frames=range(900,self.data["y"].__len__()),
+        #     init_func=init, interval=interval*1000,blit=True,repeat=False)
+
+    def __mode_control(self, event):
         """
         Execute a function based on the current mode.
         Supported modes are zooming and panning.
         """
-        mode = self.master.children["!application"].get_mode()
-        
+        mode = self.master.get_mode()
+
         if self.modes.get(mode) is not None:
             self.modes[mode](event)
-    
-    def pan(self,original_event):
-                
+
+    def pan(self, original_event):
+
         def release(new_event):
             self._figure.canvas.mpl_disconnect(self.drag_listener)
             self._figure.canvas.mpl_disconnect(self.release_listener)
 
             # Plot a new line with the same data
             # because for some reason the original line disappears
-            # when zooming on a paused plot        
-            x,y = self._figure.axes[0].get_lines()[0].get_data()
-            self._figure.axes[0].plot(x,y,color="blue")
-        
+            # when zooming on a paused plot
+            x, y = original_event.inaxes.get_lines()[0].get_data()
+            original_event.inaxes.plot(x, y, color="blue")
+
             self._figure.canvas.draw_idle()
             self._figure.canvas.flush_events()
-        
+
             # Remove the newly created line but don't update the canvas
-            self._figure.axes[0].get_lines()[-1].remove()
-        
+            original_event.inaxes.get_lines()[-1].remove()
+
         def drag(new_event):
             # In case of scrolling outside the axis
             x = new_event.xdata or original_event.xdata
             y = new_event.ydata or original_event.ydata
-            
-            xmin,xmax = self._figure.axes[0].get_xlim()
-            ymin,ymax = self._figure.axes[0].get_ylim()
-            
+
+            xmin, xmax = original_event.inaxes.get_xlim()
+            ymin, ymax = original_event.inaxes.get_ylim()
+
             dx = original_event.xdata - x
             dy = original_event.ydata - y
 
-            if xmin + dx < 0:
-                self._figure.axes[0].set_xlim(0,xmax)
-            else:
-                self._figure.axes[0].set_xlim(xmin + dx,xmax + dx)
+            reached_xlimit = False
             
-            self._figure.axes[0].set_ylim(ymin + dy,ymax + dy)
+            if xmin + dx < self.data["x"][0]:
+                original_event.inaxes.set_xlim(self.data["x"][0], xmax)
+                reached_xlimit = True
+            if xmax + dx > self.data["x"][-1]:
+                original_event.inaxes.set_xlim(xmin, self.data["x"][-1])
+                reached_xlimit = True
+            if not reached_xlimit:
+                original_event.inaxes.set_xlim(xmin + dx, xmax + dx)
+            
+            original_event.inaxes.set_ylim(ymin + dy, ymax + dy)
+
 
             self._figure.canvas.draw_idle()
 
-        self.drag_listener = self._figure.canvas.mpl_connect("motion_notify_event", drag)
-        self.release_listener = self._figure.canvas.mpl_connect("button_release_event", release)
+        self.drag_listener = self._figure.canvas.mpl_connect(
+            "motion_notify_event", drag)
+        self.release_listener = self._figure.canvas.mpl_connect(
+            "button_release_event", release)
+    
+    # Needs refactoring
+    def zoom_out(self, event):
+        ymin, ymax = event.inaxes.get_ylim()
+        xmin, xmax = event.inaxes.get_xlim()
 
-    def zoom_out(self,event):
-        ymin,ymax = self._figure.axes[0].get_ylim()
-        xmin,xmax = self._figure.axes[0].get_xlim()
+        reached_xlimit = False
+        if xmax * self.zoom_scale > self.data["x"][-1]:
+            event.inaxes.set_xlim(0, self.data["x"][-1])
+            reached_xlimit = True
 
-        self._figure.axes[0].set_xlim(xmin * self.zoom_scale, xmax * self.zoom_scale)
-        self._figure.axes[0].set_ylim(ymin * self.zoom_scale, ymax * self.zoom_scale)
+        if not reached_xlimit:
+            event.inaxes.set_xlim(0, xmax * self.zoom_scale)
         
+        # event.inaxes.set_ylim(
+        #     ymin * self.zoom_scale, ymax * self.zoom_scale)
+
         # Plot a new line with the same data
         # because for some reason the original line disappears
         # when zooming on a paused plot
-        x,y = self._figure.axes[0].get_lines()[0].get_data()
-        self._figure.axes[0].plot(x,y,color="blue")
-        
+        x, y = event.inaxes.get_lines()[0].get_data()
+        event.inaxes.plot(x, y, color="blue")
+
         self._figure.canvas.draw_idle()
         self._figure.canvas.flush_events()
-        
-        # Remove the newly created line but don't update the canvas
-        self._figure.axes[0].get_lines()[-1].remove()
 
-    def zoom_in(self,event):
-        xmin,xmax = self._figure.axes[0].get_xlim()
-        ymin,ymax = self._figure.axes[0].get_ylim()
+        # Remove the newly created line but don't update the canvas
+        event.inaxes.get_lines()[-1].remove()
+    
+    # Needs refactoring
+    def zoom_in(self, event):
+        xmin, xmax = event.inaxes.get_xlim()
+        ymin, ymax = event.inaxes.get_ylim()
+
+        reached_xlimit = False
         
-        self._figure.axes[0].set_xlim(xmin / self.zoom_scale, xmax / self.zoom_scale)
-        self._figure.axes[0].set_ylim(ymin / self.zoom_scale, ymax / self.zoom_scale)
+        # if reached_xlimit:
+
+        event.inaxes.set_xlim(
+            xmin / self.zoom_scale, xmax / self.zoom_scale)
+        # event.inaxes.set_ylim(
+        #     ymin / self.zoom_scale, ymax / self.zoom_scale)
 
         # Plot a new line with the same data
         # because for some reason the original line disappears
-        # when zooming on a paused plot        
-        x,y = self._figure.axes[0].get_lines()[0].get_data()
-        self._figure.axes[0].plot(x,y,color="blue")
-        
+        # when zooming on a paused plot
+        x, y = event.inaxes.get_lines()[0].get_data()
+        event.inaxes.plot(x, y, color="blue")
+
         self._figure.canvas.draw_idle()
         self._figure.canvas.flush_events()
-        
+
         # Remove the newly created line but don't update the canvas
-        self._figure.axes[0].get_lines()[-1].remove()
+        event.inaxes.get_lines()[-1].remove()
 
     def pause(self):
-        self._animation.event_source.stop()
-        self._play = False
-        self._figure.canvas.flush_events()
-    
+        if self._animation:
+            self._animation.event_source.stop()
+            self.playing = False
+            self._figure.canvas.flush_events()
+
     def play(self):
-        self._animation.event_source.start()
-        self._play = True
-        self._figure.canvas.flush_events()
-    
-    def cleanup(self):
-        """
-        Pause all animations and destroy the Viewer
-        """   
-        self.pause()
-        self.destroy()
+        if self._animation:
+            self._animation.event_source.start()
+            self.playing = True
+            self._figure.canvas.flush_events()
