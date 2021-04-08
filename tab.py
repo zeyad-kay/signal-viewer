@@ -5,14 +5,15 @@ from helpers import read_edf
 from equalizer import Equalizer_Panel
 
 class Tab(tk.Frame):
-    def __init__(self,master=None,name="Untitled"):
+    def __init__(self,master=None,samples={}):
         super().__init__(master,background="white")
         self._mode = None
-        self.master.add(self,text=name)
+        self.samples = samples
+        self.master.add(self,text=self.samples["label"])
 
         self.create_toolbar()
  
-        self.create_viewer(read_edf("SampleECG.edf"))
+        self.create_viewer(self.samples)
  
         # self.rowconfigure(3,weight=1)
         # toolbar = ToolBar(self)
@@ -30,9 +31,9 @@ class Tab(tk.Frame):
     def delete_tab(self):
         self.master.forget(self.master.select())
 
-    def create_viewer(self,data):
+    def create_viewer(self,samples):
         self.rowconfigure(1,weight=1)
-        self.viewer = Viewer(self,data,rows=1,columns=1)
+        self.viewer = Viewer(self,samples,rows=1,columns=1)
         self.viewer.plot(row=0,column=0,animated=True)
         # self.viewer.plot(row=0,column=0,animated=False)
         # self.viewer.plot(row=0,column=1,animated=False)

@@ -37,5 +37,5 @@ class File_Explorer():
         if filename is None:
             return None
         
-        root.plots_data.append(read_edf(filename))
-        root.event_generate("<<Fileupload>>", data=filename)
+        root.new_samples = read_edf(filename)
+        root.event_generate("<<Fileupload>>")

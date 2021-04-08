@@ -8,8 +8,8 @@ class Application(tk.Frame):
     def __init__(self,master=None):
         super().__init__(master)
         self.master = master
-        # Just for testing
-        self.plots_data = []
+        self.new_samples = {}
+        
         self.create_widgets()
 
     def create_widgets(self):
@@ -30,10 +30,10 @@ class Application(tk.Frame):
         
         # Start listening for file upload event
         # to create a new tab
-        self.master.bind("<<Fileupload>>",lambda e: self.create_tab())
+        self.master.bind("<<Fileupload>>",lambda e: self.create_tab(self.samples))
     
-    def create_tab(self,name="Untitled"):
-        tab = Tab(self.tabs_container,name)
+    def create_tab(self,samples):
+        tab = Tab(self.tabs_container,samples)
         tab.columnconfigure(0,weight=1)
 
 if __name__ == "__main__":

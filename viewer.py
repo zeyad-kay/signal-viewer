@@ -10,12 +10,12 @@ class Viewer(tk.Frame):
     Visual component for viewing data on a Matplotlib Figure.
     """
 
-    def __init__(self, master=None, data={}, rows=1, columns=1):
+    def __init__(self, master=None, samples={}, rows=1, columns=1):
         super().__init__(master,background="white")
         self.master = master
         self.zoom_scale = 2
         self.playing = True
-        self.data = data
+        self.samples = samples
         self._animation = None
         self.modes = {
             "zoomIn": self.zoom_in,
@@ -51,7 +51,7 @@ class Viewer(tk.Frame):
             print("row: ", row)
             print("column: ", column)
             self._figure.add_subplot(self._grid[row, column]).specgram(
-                self.data["y"], self.data["freq"])
+                self.samples["y"], self.samples["freq"])
             self._figure.canvas.draw_idle()
             self._figure.canvas.flush_events()
         except Exception as e:
@@ -68,13 +68,13 @@ class Viewer(tk.Frame):
             self.__animate_plot(ax, interval)
         else:
             ax.plot(
-                self.data["x"], self.data["y"], color="blue")
+                self.samples["x"], self.samples["y"], color="blue")
             ax.grid(True)
             ax.set_xlabel("Time")
             ax.set_ylabel("Amplitude")
-            ax.set_xlim(0, self.data["x"][1000])
+            ax.set_xlim(0, self.samples["x"][1000])
             ax.set_ylim(
-                min(self.data["y"]), max(self.data["y"]))
+                min(self.samples["y"]), max(self.samples["y"]))
 
         # self._figure.add_subplot(self._grid[1, :])
         # Initial draw
@@ -87,9 +87,9 @@ class Viewer(tk.Frame):
         line = ax.plot([], [], color="blue")[0]
 
         def init():
-            line.axes.set_xlim(0, self.data["x"][1000])
+            line.axes.set_xlim(0, self.samples["x"][1000])
             line.axes.set_ylim(
-                min(self.data["y"]) * self.zoom_scale, max(self.data["y"]) * self.zoom_scale)
+                min(self.samples["y"]) * self.zoom_scale, max(self.samples["y"]) * self.zoom_scale)
             line.axes.set_xlabel("Time")
             line.axes.set_ylabel("Amplitude")
             line.axes.grid(True)
@@ -97,12 +97,12 @@ class Viewer(tk.Frame):
 
         def update(frame):
             try:
-                if frame * 100 > self.data["y"].__len__():
-                    x = self.data["x"]
-                    y = self.data["y"]
+                if frame * 100 > self.samples["y"].__len__():
+                    x = self.samples["x"]
+                    y = self.samples["y"]
                 else:
-                    x = self.data["x"][:frame * 100]
-                    y = self.data["y"][:frame * 100]
+                    x = self.samples["x"][:frame * 100]
+                    y = self.samples["y"][:frame * 100]
 
                 # adjust scale
                 xmin, xmax = self._figure.axes[0].get_xlim()
@@ -131,9 +131,9 @@ class Viewer(tk.Frame):
 
         # Setting the Interval too low messes up the the event loop
         # when there are multiple plots
-        self._animation = FuncAnimation(self._figure, update, frames=range(1, int(self.data["y"].__len__()/100) + 1),
+        self._animation = FuncAnimation(self._figure, update, frames=range(1, int(self.samples["y"].__len__()/100) + 1),
                                         init_func=init, interval=interval*1000, blit=True, repeat=False)
-        # self._animation = FuncAnimation(self._figure, update,frames=range(900,self.data["y"].__len__()),
+        # self._animation = FuncAnimation(self._figure, update,frames=range(900,self.samples["y"].__len__()),
         #     init_func=init, interval=interval*1000,blit=True,repeat=False)
 
     def __mode_control(self, event):
@@ -177,11 +177,11 @@ class Viewer(tk.Frame):
 
             reached_xlimit = False
             
-            if xmin + dx < self.data["x"][0]:
-                original_event.inaxes.set_xlim(self.data["x"][0], xmax)
+            if xmin + dx < self.samples["x"][0]:
+                original_event.inaxes.set_xlim(self.samples["x"][0], xmax)
                 reached_xlimit = True
-            if xmax + dx > self.data["x"][-1]:
-                original_event.inaxes.set_xlim(xmin, self.data["x"][-1])
+            if xmax + dx > self.samples["x"][-1]:
+                original_event.inaxes.set_xlim(xmin, self.samples["x"][-1])
                 reached_xlimit = True
             if not reached_xlimit:
                 original_event.inaxes.set_xlim(xmin + dx, xmax + dx)
@@ -202,8 +202,8 @@ class Viewer(tk.Frame):
         xmin, xmax = event.inaxes.get_xlim()
 
         reached_xlimit = False
-        if xmax * self.zoom_scale > self.data["x"][-1]:
-            event.inaxes.set_xlim(0, self.data["x"][-1])
+        if xmax * self.zoom_scale > self.samples["x"][-1]:
+            event.inaxes.set_xlim(0, self.samples["x"][-1])
             reached_xlimit = True
 
         if not reached_xlimit:
