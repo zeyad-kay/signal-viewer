@@ -30,7 +30,7 @@ class Application(tk.Frame):
         
         # Start listening for file upload event
         # to create a new tab
-        self.master.bind("<<Fileupload>>",lambda e: self.create_tab(self.samples))
+        self.master.bind("<<Fileupload>>",lambda e: self.create_tab(self.new_samples))
     
     def create_tab(self,samples):
         tab = Tab(self.tabs_container,samples)
