@@ -7,26 +7,23 @@ class Tab(tk.Frame):
     def __init__(self,master=None,samples={}):
         super().__init__(master,background="white")
         self._mode = None
+        self.viewers = []
         self.samples = samples
         self.master.add(self,text=self.samples["label"])
 
         self.rowconfigure(0,weight=1)
-        self.create_toolbar().grid(row=0,column=0,sticky="nwe")
-
         self.rowconfigure(1,weight=1)
+        self.rowconfigure(2,weight=1)
+        self.rowconfigure(3,weight=1)
+        
+        self.create_toolbar().grid(row=0,column=0,sticky="nwe")
+        
         self.create_viewer(self.samples).grid(row=1,column=0,sticky="nswe")
-        
-        # self.rowconfigure(2,weight=1)
-        # self.create_viewer(self.samples).grid(row=2,column=0,sticky="nswe")
-        
-        # self.rowconfigure(3,weight=1)
-        # self.create_viewer(self.samples).grid(row=3,column=0,sticky="nswe")
-        
-        # self.rowconfigure(3,weight=1)
-        # self.create_viewer(self.samples).grid(row=3,column=0,sticky="nswe")
 
-        # self.rowconfigure(3,weight=1)
-        # self.create_equalizer(10,1000).grid(row=3,column=0,sticky="")
+        self.create_viewer(self.samples).grid(row=2,column=0,sticky="nswe")
+        
+        self.create_equalizer(10,1000).grid(row=3,column=0,sticky="")
+
 
     def create_toolbar(self): 
         toolbar = ToolBar(self)
@@ -39,6 +36,7 @@ class Tab(tk.Frame):
         viewer = Viewer(self,samples,rows=1,columns=2)
         viewer.plot(row=0,column=0,animated=True)
         viewer.spectrogram(row=0,column=1)
+        self.viewers.append(viewer)
         return viewer
     
     def create_equalizer(self,bins, Fs):

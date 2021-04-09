@@ -38,10 +38,11 @@ class ToolBar(tk.Frame):
         self.deleteButton.grid(row=0, column=5, padx=5, pady=3)
 
     def toggle(self):
-        if self.master.viewer.playing:
-            self.master.viewer.pause()
-            self.playImg = tk.PhotoImage(file="images/play.png")
-        else:
-            self.master.viewer.play()
-            self.playImg = tk.PhotoImage(file="images/pause.png")
+        for viewer in self.master.viewers:
+            if viewer.playing:
+                viewer.pause()
+                self.playImg = tk.PhotoImage(file="images/play.png")
+            else:
+                viewer.play()
+                self.playImg = tk.PhotoImage(file="images/pause.png")
         self.playButton["image"] = self.playImg

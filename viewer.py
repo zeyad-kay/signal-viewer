@@ -32,7 +32,7 @@ class Viewer(tk.Frame):
         Create a matplotlib Figure and initialize the grid.
         """
 
-        self._figure = Figure(figsize=(5, 5), constrained_layout=True)
+        self._figure = Figure(figsize=(2, 2), constrained_layout=True)
         FigureCanvasTkAgg(self._figure, master=self)
         self._grid = self._figure.add_gridspec(rows, columns)
         self._figure.canvas.get_tk_widget().grid(row=0, column=0, sticky='nswe')
@@ -87,7 +87,7 @@ class Viewer(tk.Frame):
         line = ax.plot([], [], color="blue")[0]
 
         def init():
-            ax.set_xlim(0, self.samples["x"][1000])
+            ax.set_xlim(0, 1)
             ax.set_ylim(
                 min(self.samples["y"]) * self.zoom_scale, max(self.samples["y"]) * self.zoom_scale)
             ax.set_xlabel("Time")
@@ -179,20 +179,20 @@ class Viewer(tk.Frame):
             if xmin + dx < xdata[0]:
                 original_event.inaxes.set_xlim(xdata[0], xmax)
                 reached_xlimit = True
-            if xmax + dx > xdata[-1]:
-                original_event.inaxes.set_xlim(xmin, xdata[-1])
-                reached_xlimit = True
+            # if xmax + dx > xdata[-1]:
+            #     original_event.inaxes.set_xlim(xmin, xdata[-1])
+            #     reached_xlimit = True
             if not reached_xlimit:
                 original_event.inaxes.set_xlim(xmin + dx, xmax + dx)
             
-            if ymin + dy < min(ydata):
-                original_event.inaxes.set_ylim(min(ydata), ymax)
-                reached_ylimit = True
-            if ymax + dy > max(ydata):
-                original_event.inaxes.set_ylim(ymin, max(ydata))
-                reached_ylimit = True
-            if not reached_ylimit:
-                original_event.inaxes.set_ylim(ymin + dy, ymax + dy)
+            # if ymin + dy < min(ydata):
+            #     original_event.inaxes.set_ylim(min(ydata), ymax)
+            #     reached_ylimit = True
+            # if ymax + dy > max(ydata):
+            #     original_event.inaxes.set_ylim(ymin, max(ydata))
+            #     reached_ylimit = True
+            # if not reached_ylimit:
+            original_event.inaxes.set_ylim(ymin + dy, ymax + dy)
 
             self._figure.canvas.draw_idle()
 
