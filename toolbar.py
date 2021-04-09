@@ -5,6 +5,7 @@ class ToolBar(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master, bg="white")
         self.master = master
+        self.rowconfigure(0, weight=1)
 
         self.playImg = tk.PhotoImage(file="images/pause.png")
         self.playButton = tk.Button(
