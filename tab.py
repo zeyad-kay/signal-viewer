@@ -10,7 +10,7 @@ class Tab(tk.Frame):
         self.viewers = []
 
         from audio import signal ############### testing
-        self.signal = signal1 ############### testing
+        self.signal = signal ############### testing
         # self.equalized_samples = signal
         self.master.add(self,text=self.signal["label"])
 

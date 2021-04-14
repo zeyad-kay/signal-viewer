@@ -41,16 +41,20 @@ def save_pdf(filename,signal,time,equalized_samples):
         
         pdf.savefig()
 
-def equalize(original_fourier,current_equalized_fourier,fmin,fmax,factor=1):      
-    equalized_fourier = np.array([0])
-    equalized_fourier = np.append(equalized_fourier,current_equalized_fourier[1:fmin])
-    equalized_fourier = np.append(equalized_fourier,original_fourier[fmin:fmax] * factor)
-    equalized_fourier = np.append(equalized_fourier,current_equalized_fourier[fmax:-fmax+1])
-    equalized_fourier = np.append(equalized_fourier,original_fourier[-fmax+1:-fmin+1] * factor)
-    equalized_fourier = np.append(equalized_fourier,current_equalized_fourier[-fmin+1:])
-    
-    equalized_samples = np.fft.ifft(equalized_fourier).real
-    return equalized_samples
+def equalize(original_fourier,current_equalized_fourier,N,Fs,fmin,fmax,factor=1):      
+    freq = np.fft.fftfreq(N,1/Fs)
+    equalized_fourier = []
+    for i,freq in enumerate(freq):
+        if abs(freq) >= fmin and abs(freq) < fmax:
+            equalized_fourier.append(original_fourier[i]*factor)
+            
+        else:
+            print(i,freq)
+            equalized_fourier.append(current_equalized_fourier[i])
+
+    equalized_fourier = np.array(equalized_fourier)
+    equalized_fourier[0] = 0
+    return equalized_fourier
 
 def save_wav(filename,rate,samples):
     write(filename,rate,samples)

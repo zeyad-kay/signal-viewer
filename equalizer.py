@@ -10,6 +10,7 @@ class Equalizer_Panel(tk.Frame):
         self.Fs = Fs
         self.viewer = viewer
         self.original_fourier = np.fft.fft(viewer.signal["samples"])
+        self.equalized_fourier = self.original_fourier
         # main frame
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
@@ -22,8 +23,8 @@ class Equalizer_Panel(tk.Frame):
         self.value.set(1)
         # creating the sliders loop
         for i in range(bins):
-            slider = Frequency_Slider(self.frameScale, fmin=int(
-                (i)*Fs/bins + 1), fmax=int((i+1)*Fs/bins))
+            slider = Frequency_Slider(self.frameScale, fmin=
+                (i)*Fs/bins, fmax=(i+1)*Fs/bins)
 
             slider.grid(row=0, column=i+1)
 
@@ -34,7 +35,7 @@ class Equalizer_Panel(tk.Frame):
             viewer.plot(animated=True, interval=2-value)
 
     def update(self, fmin, fmax, factor):
-        equalized_samples = equalize(
-            self.original_fourier, np.fft.fft(self.viewer.equalized_samples), fmin, fmax, factor)
+        self.equalized_fourier = equalize(
+            self.original_fourier, self.equalized_fourier, self.viewer.signal["N"],self.viewer.signal["Fs"],fmin, fmax, factor)
 
-        self.viewer.update_equalized_samples(equalized_samples)
+        self.viewer.update_equalized_samples(np.fft.ifft(self.equalized_fourier).real)
