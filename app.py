@@ -32,6 +32,8 @@ class Application(tk.Frame):
                          lambda e: self.create_tab(self.new_signal))
 
     def create_tab(self, signal):
+        # for tab in self.tabs_container.children.values():
+        #     tab.toolbar.toggle_play()
         tab = Tab(self.tabs_container, signal)
         tab.columnconfigure(0, weight=1)
         self.tabs_container.select(tab)
