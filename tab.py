@@ -8,8 +8,11 @@ class Tab(tk.Frame):
         super().__init__(master,background="white")
         self._mode = None
         self.viewers = []
-        self.samples = samples
-        self.master.add(self,text=self.samples["label"])
+        # self.samples = samples
+        from audio import signal ############### testing
+        self.signal = signal ############### testing
+        # self.equalized_samples = signal
+        self.master.add(self,text=self.signal["label"])
 
         self.rowconfigure(0,weight=1)
         self.rowconfigure(1,weight=1)
@@ -18,30 +21,32 @@ class Tab(tk.Frame):
         
         self.create_toolbar().grid(row=0,column=0,sticky="nwe")
         
-        self.create_viewer(self.samples).grid(row=1,column=0,sticky="nswe")
+        self.create_viewer(self.signal).grid(row=1,column=0,sticky="nswe")
 
-        self.create_viewer(self.samples).grid(row=2,column=0,sticky="nswe")
-        
-        self.create_equalizer(10,1000).grid(row=3,column=0,sticky="")
+        self.create_viewer(self.signal).grid(row=2,column=0,sticky="nswe")
 
+        self.create_equalizer(self.signal,10)
+        self.equalizer.grid(row=3,column=0,sticky="")
 
-    def create_toolbar(self): 
-        toolbar = ToolBar(self)
-        return toolbar
+        # for slider in self.equalizer.sliders:
+        #     print(slider['variable'])
+            # slider["command"] = lambda e: print(f"slider {slider['variable']} : {e}")
+
+    def create_toolbar(self):
+        return ToolBar(self)
 
     def delete_tab(self):
         self.master.forget(self.master.select())
 
-    def create_viewer(self,samples):
-        viewer = Viewer(self,samples,rows=1,columns=2)
-        viewer.plot(row=0,column=0,animated=True)
-        viewer.spectrogram(row=0,column=1)
+    def create_viewer(self,signal):
+        viewer = Viewer(self,signal,rows=1,columns=2)
+        viewer.plot(animated=True,interval=1)
+        viewer.spectrogram()
         self.viewers.append(viewer)
         return viewer
     
-    def create_equalizer(self,bins, Fs):
-        equalizer = Equalizer_Panel(self, bins, Fs)
-        return equalizer
+    def create_equalizer(self, samples, bins):
+        self.equalizer = Equalizer_Panel(self, samples, bins)
 
     def set_mode(self,mode):
         # Reset mode if it is already selected

@@ -2,6 +2,7 @@ import numpy as np
 import pyedflib
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
+from scipy.io.wavfile import read,write
 
 def read_edf(filename):
     """
@@ -10,32 +11,57 @@ def read_edf(filename):
     """
     f= pyedflib.EdfReader(filename)
     label = f.getSignalLabels()[0]
-    freq = f.getSampleFrequency(0)
+    Fs = f.getSampleFrequency(0)
     samples = f.readSignal(0)
-    time = np.linspace(0,samples.__len__() * 1/freq,samples.__len__())
     return {
-        "x":time,
-        "y":samples,
-        "freq": freq,
+        "samples":samples,
+        "N":len(samples),
+        "Fs": Fs,
         "label":label
     }
 
-def save_pdf(filename,plots=[]):
+def save_pdf(filename,signal,time,equalized_samples):
     """
     Write a PDF file of the plots and their spectrograms.
     """
     with PdfPages(filename + ".pdf") as pdf:
-        fig,axs = plt.subplots(ncols=2,nrows=plots.__len__(),constrained_layout=True)
+        fig,axs = plt.subplots(ncols=2,nrows=2,constrained_layout=True)
 
-        if plots.__len__() == 1:
-            axs = np.array([axs])
-
-        for i,plot in enumerate(plots):
-            # Take only 1000 samples
-            axs[i][0].plot(plot["x"][:1000],plot["y"][:1000])
-            axs[i][0].set_title(plot["label"])
+        axs[0][0].plot(time[:1000],signal["samples"][:1000])
+        axs[0][0].set_title(signal["label"])
             
-            axs[i][1].specgram(plot["y"],plot["freq"])
-            axs[i][1].set_title(plot["label"] + " " + "Spectrogram")
+        axs[0][1].specgram(signal["samples"],Fs=signal["Fs"])
+        axs[0][1].set_title(signal["label"] + " " + "Spectrogram")
+        
+        axs[1][0].plot(time[:1000],equalized_samples[:1000])
+        axs[1][0].set_title("Equalized" + " " + signal["label"])
+            
+        axs[1][1].specgram(equalized_samples,Fs=signal["Fs"])
+        axs[1][1].set_title("Equalized" + " " + signal["label"] + " " + "Spectrogram")
         
         pdf.savefig()
+
+def equalize(original_fourier,current_equalized_fourier,fmin,fmax,factor=1):      
+    equalized_fourier = np.array([0])
+    equalized_fourier = np.append(equalized_fourier,current_equalized_fourier[1:fmin])
+    equalized_fourier = np.append(equalized_fourier,original_fourier[fmin:fmax] * factor)
+    equalized_fourier = np.append(equalized_fourier,current_equalized_fourier[fmax:-fmax+1])
+    equalized_fourier = np.append(equalized_fourier,original_fourier[-fmax+1:-fmin+1] * factor)
+    equalized_fourier = np.append(equalized_fourier,current_equalized_fourier[-fmin+1:])
+    
+    equalized_samples = np.fft.ifft(equalized_fourier).real
+    return equalized_samples
+
+def save_wav(filename,rate,samples):
+    write(filename,rate,samples)
+
+def read_wav(filename):
+    Fs,data=read(filename)
+    samples = data
+    label = filename.split("/")[-1][:-4]
+    return {
+        "Fs":Fs,
+        "samples":samples,
+        "N":len(samples),
+        "label":label
+    }

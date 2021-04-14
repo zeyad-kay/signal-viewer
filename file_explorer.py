@@ -1,6 +1,7 @@
 from tkinter import filedialog
-from helpers import read_edf,save_pdf
+from helpers import read_edf,save_pdf,read_wav,save_wav
 import threading
+import re
 
 class File_Explorer():
     """
@@ -13,14 +14,20 @@ class File_Explorer():
         """
         filename = filedialog.asksaveasfilename(initialdir = "/",
                                           title = "Save a File",
+                                          defaultextension="*.pdf",
                                           filetypes = (("PDF files",
-                                                        "*.pdf*"),
+                                                        "*.pdf"),
+                                                        ("WAV files",
+                                                       "*.wav"),
                                                        ("all files",
-                                                        "*.*"))) or None
-        if filename is None:
+                                                        "*.*"))) or ""
+        if re.search(".wav\Z",filename) is not None:
+            threading.Thread(target=save_wav,args=(filename,root.signal["Fs"],root.signal["samples"])).run()
+        elif re.search(".pdf\Z",filename) is not None:
+            threading.Thread(target=save_pdf,args=(filename,root.viewers[1].signal,root.viewers[1].time,root.viewers[1].equalized_samples)).run()
+        else:
             return None
-        
-        threading.Thread(target=save_pdf,args=(filename,root.plots_data)).run()
+
 
     @staticmethod
     def open_file(root):
@@ -31,11 +38,16 @@ class File_Explorer():
                                           title = "Select a File",
                                           filetypes = (("EDF files",
                                                         "*.edf*"),
+                                                       ("WAV files",
+                                                       "*.wav"),
                                                        ("all files",
-                                                        "*.*"))) or None
+                                                        "*.*"))) or ""
         
-        if filename is None:
+        if re.search(".wav\Z",filename) is not None:
+            root.new_signal = read_wav(filename)
+            root.event_generate("<<Fileupload>>")
+        elif re.search(".edf\Z",filename) is not None:
+            root.new_signal = read_edf(filename)
+            root.event_generate("<<Fileupload>>")
+        else:
             return None
-        
-        root.new_samples = read_edf(filename)
-        root.event_generate("<<Fileupload>>")

@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 from file_explorer import File_Explorer
 
 class ToolBar(tk.Frame):
@@ -9,7 +10,7 @@ class ToolBar(tk.Frame):
 
         self.playImg = tk.PhotoImage(file="images/pause.png")
         self.playButton = tk.Button(
-            self, image=self.playImg, bd=0, bg="white", command=lambda: self.toggle())
+            self, image=self.playImg, bd=0, bg="white", command=lambda: self.toggle_play())
         self.playButton.grid(row=0, column=0, padx=5, pady=3)
 
         self.saveImg = tk.PhotoImage(file="images/floppy.png")
@@ -36,8 +37,30 @@ class ToolBar(tk.Frame):
         self.deleteButton = tk.Button(self, image=self.deleteImg, border=0,
                                       bg="white", command=lambda: self.master.delete_tab())
         self.deleteButton.grid(row=0, column=5, padx=5, pady=3)
+        
+        self.spectrogram_on = tk.IntVar()
+        self.spectrogram_on.set(1)
+        self.spectrogramButton = tk.Checkbutton(self,variable=self.spectrogram_on,text="spectrogram",onvalue=1,offvalue=0, bg="white",command=lambda: self.toggle_spectrograms())
+        self.spectrogramButton.grid(row=0, column=6, padx=5, pady=3)
+        
+        
+        self.selected_color = tk.StringVar()
+        self.selected_color.set("spring")
+        self.spectrogramColor = ttk.Combobox(self,textvariable=self.selected_color)
+        self.spectrogramColor["values"] = ("spring","Greens","Blues","Reds","plasma","pink","gray")
+        self.spectrogramColor.bind('<<ComboboxSelected>>', lambda e: self.color_spectrograms())
+        self.spectrogramColor.grid(row=0, column=7, padx=5, pady=3)
 
-    def toggle(self):
+
+    def color_spectrograms(self):
+        for viewer in self.master.viewers:
+            viewer.spectrogram(viewer.signal["samples"],viewer.signal["Fs"],cmap = self.selected_color.get())
+    
+    def toggle_spectrograms(self):
+        for viewer in self.master.viewers:
+            viewer.toggle_ax(viewer._figure.axes[1])
+    
+    def toggle_play(self):
         for viewer in self.master.viewers:
             if viewer.playing:
                 viewer.pause()
