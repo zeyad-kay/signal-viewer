@@ -49,7 +49,6 @@ def equalize(original_fourier,current_equalized_fourier,N,Fs,fmin,fmax,factor=1)
             equalized_fourier.append(original_fourier[i]*factor)
             
         else:
-            print(i,freq)
             equalized_fourier.append(current_equalized_fourier[i])
 
     equalized_fourier = np.array(equalized_fourier)

@@ -4,14 +4,12 @@ from viewer import Viewer
 from equalizer import Equalizer_Panel
 
 class Tab(tk.Frame):
-    def __init__(self,master=None,signal1={}):
+    def __init__(self,master=None,signal={}):
         super().__init__(master,background="white")
         self._mode = None
         self.viewers = []
 
-        from audio import signal ############### testing
-        self.signal = signal ############### testing
-        # self.equalized_samples = signal
+        self.signal = signal
         self.master.add(self,text=self.signal["label"])
 
         self.rowconfigure(0,weight=1)
