@@ -26,13 +26,13 @@ class Equalizer_Panel(tk.Frame):
         
         self.fmin_value = tk.IntVar()
         self.fmin_slider = tk.Scale(self.intervalScale, orient="horizontal", label="Fmin (Hz)", from_=1,
-                                        to=self.Fs, resolution=10, variable=self.fmin_value)
+                                        to=self.Fs/2, resolution=10, variable=self.fmin_value)
         self.fmin_slider.grid(row=1, column=0, padx=5, pady=3)
         self.fmin_value.set(1)
         
         self.fmax_value = tk.IntVar()
         self.fmax_slider = tk.Scale(self.intervalScale, orient="horizontal", label="Fmax (Hz)", from_=1,
-                                        to=self.Fs, resolution=10, variable=self.fmax_value)
+                                        to=self.Fs/2, resolution=10, variable=self.fmax_value)
         self.fmax_slider.grid(row=2, column=0, padx=5, pady=3)
         self.fmax_value.set(1)
 
@@ -41,7 +41,7 @@ class Equalizer_Panel(tk.Frame):
         # creating the sliders loop
         for i in range(bins):
             slider = Frequency_Slider(self.frameScale, fmin=
-                (i)*Fs/bins, fmax=(i+1)*Fs/bins)
+                (i)*(Fs/2)/bins, fmax=(i+1)*(Fs/2)/bins)
 
             slider.grid(row=0, column=i+1)
 
