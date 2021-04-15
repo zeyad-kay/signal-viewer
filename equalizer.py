@@ -26,15 +26,15 @@ class Equalizer_Panel(tk.Frame):
         
         self.fmin_value = tk.IntVar()
         self.fmin_slider = tk.Scale(self.intervalScale, orient="horizontal", label="Fmin (Hz)", from_=1,
-                                        to=self.Fs/2, resolution=10, variable=self.fmin_value)
+                                        to=self.Fs/2, resolution=1, variable=self.fmin_value)
         self.fmin_slider.grid(row=1, column=0, padx=5, pady=3)
         self.fmin_value.set(1)
         
         self.fmax_value = tk.IntVar()
         self.fmax_slider = tk.Scale(self.intervalScale, orient="horizontal", label="Fmax (Hz)", from_=1,
-                                        to=self.Fs/2, resolution=10, variable=self.fmax_value)
+                                        to=self.Fs/2, resolution=1, variable=self.fmax_value)
         self.fmax_slider.grid(row=2, column=0, padx=5, pady=3)
-        self.fmax_value.set(1)
+        self.fmax_value.set(self.Fs/2)
 
         self.update_range_btn = tk.Button(self.intervalScale,command=lambda : self.update_range(),text="Update Range")
         self.update_range_btn.grid(row=3,column=0, padx=5, pady=3)
@@ -49,14 +49,18 @@ class Equalizer_Panel(tk.Frame):
         self.frameScale.grid(column=1, row=0)
 
     def increase_speed(self, value):
-        for viewer in self.master.viewers:
-            viewer.plot(animated=True, interval=2-value)
+        self.viewer.plot(animated=True, interval=2-value)
 
-    def update_spectrogram(self, fmin, fmax, factor):
+    def update_spectrogram(self, fmin, fmax, inclusive_factor,exclusive_factor=1):
+        
         self.equalized_fourier = equalize(
-            self.original_fourier, self.equalized_fourier, self.viewer.signal["N"],self.viewer.signal["Fs"],fmin, fmax, factor)
-
+            self.original_fourier, self.equalized_fourier, self.viewer.signal["N"],self.viewer.signal["Fs"],fmin, fmax, inclusive_factor,exclusive_factor)
+        
         self.viewer.update_equalized_samples(np.fft.ifft(self.equalized_fourier).real)
+        
+        self.viewer._figure.axes[1].set_ylim(self.fmin_value.get(),self.fmax_value.get())
+        self.viewer._figure.axes[3].set_ylim(self.fmin_value.get(),self.fmax_value.get())
+        self.viewer._figure.canvas.draw_idle()
 
     def update_range(self):
         fmin = self.fmin_value.get()
@@ -65,3 +69,5 @@ class Equalizer_Panel(tk.Frame):
 
         for i,slider in enumerate(self.frameScale.children.values()):
             slider.set_range(fmin + (i)*diff/self.bins,fmin + (i+1)*diff/self.bins)
+        
+        self.update_spectrogram(fmin,fmax,1,0)

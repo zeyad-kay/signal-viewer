@@ -3,11 +3,11 @@ from tkinter import ttk
 from file_explorer import File_Explorer
 
 class ToolBar(tk.Frame):
-    def __init__(self, master=None):
+    def __init__(self, master=None, viewer=None):
         super().__init__(master, bg="white")
         self.master = master
         self.rowconfigure(0, weight=1)
-
+        self.viewer = viewer
         self.playImg = tk.PhotoImage(file="images/pause.png")
         self.playButton = tk.Button(
             self, image=self.playImg, bd=0, bg="white", command=lambda: self.toggle_play())
@@ -45,27 +45,25 @@ class ToolBar(tk.Frame):
         
         
         self.selected_color = tk.StringVar()
-        self.selected_color.set("spring")
+        self.selected_color.set("rainbow")
         self.spectrogramColor = ttk.Combobox(self,textvariable=self.selected_color)
-        self.spectrogramColor["values"] = ("spring","Greens","Blues","Reds","plasma","pink","gray")
+        self.spectrogramColor["values"] = ("rainbow","spring","Greens","Blues","Reds","plasma","pink","gray")
         self.spectrogramColor.bind('<<ComboboxSelected>>', lambda e: self.color_spectrograms())
         self.spectrogramColor.grid(row=0, column=7, padx=5, pady=3)
 
 
     def color_spectrograms(self):
-        for viewer in self.master.viewers:
-            viewer.spectrogram(viewer.signal["samples"],viewer.signal["Fs"],cmap = self.selected_color.get())
-    
+        self.viewer.set_cmap(self.selected_color.get())
+
     def toggle_spectrograms(self):
-        for viewer in self.master.viewers:
-            viewer.toggle_ax(viewer._figure.axes[1])
+        self.viewer.toggle_ax(self.viewer._figure.axes[1])
+        self.viewer.toggle_ax(self.viewer._figure.axes[3])
     
     def toggle_play(self):
-        for viewer in self.master.viewers:
-            if viewer.playing:
-                viewer.pause()
-                self.playImg = tk.PhotoImage(file="images/play.png")
-            else:
-                viewer.play()
-                self.playImg = tk.PhotoImage(file="images/pause.png")
+        if self.viewer.playing:
+            self.viewer.pause()
+            self.playImg = tk.PhotoImage(file="images/play.png")
+        else:
+            self.viewer.play()
+            self.playImg = tk.PhotoImage(file="images/pause.png")
         self.playButton["image"] = self.playImg

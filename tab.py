@@ -17,28 +17,25 @@ class Tab(tk.Frame):
         self.rowconfigure(2,weight=1)
         self.rowconfigure(3,weight=1)
         
-        self.create_toolbar()
+        self.create_viewer(self.signal)
+        self.viewer.grid(row=1,column=0,sticky="nswe")
+        
+        self.create_toolbar(self.viewer)
         self.toolbar.grid(row=0,column=0,sticky="nwe")
         
-        self.create_viewer(self.signal).grid(row=1,column=0,sticky="nswe")
+        self.create_equalizer(self.viewer,self.signal["Fs"],bins=10)
+        self.equalizer.grid(row=2,column=0,sticky="")
 
-        self.create_viewer(self.signal).grid(row=2,column=0,sticky="nswe")
-
-        self.create_equalizer(self.viewers[1],self.signal["Fs"],bins=10)
-        self.equalizer.grid(row=3,column=0,sticky="")
-
-    def create_toolbar(self):
-        self.toolbar = ToolBar(self)
+    def create_toolbar(self,viewer):
+        self.toolbar = ToolBar(self,viewer)
 
     def delete_tab(self):
         self.master.forget(self.master.select())
 
     def create_viewer(self,signal):
-        viewer = Viewer(self,signal,rows=1,columns=2)
-        viewer.plot(animated=True,interval=1)
-        viewer.spectrogram(signal["samples"],signal["Fs"])
-        self.viewers.append(viewer)
-        return viewer
+        self.viewer = Viewer(self,signal,rows=2,columns=2)
+        self.viewer.plot(animated=True,interval=1)
+        self.viewer.spectrogram()
 
     def create_equalizer(self, viewer,Fs, bins):
         self.equalizer = Equalizer_Panel(self, viewer, Fs, bins)
