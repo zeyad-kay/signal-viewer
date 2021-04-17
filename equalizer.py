@@ -17,12 +17,13 @@ class Equalizer_Panel(tk.Frame):
         self.columnconfigure(0, weight=1)
         self.frameScale = tk.Frame(self)
         self.intervalScale = tk.Frame(self)
-
+        
         self.interval_value = tk.IntVar()
         self.interval_slider = tk.Scale(self.intervalScale, orient="horizontal", label="Speed", from_=1,
-                                        to=1.9, resolution=0.1, variable=self.interval_value, command=lambda v: self.increase_speed(float(v)))
+                                        to=1.9, resolution=0.1, variable=self.interval_value)
         self.interval_slider.grid(row=0, column=0, padx=5, pady=3)
         self.interval_value.set(1)
+        self.interval_slider.bind("<ButtonRelease>",lambda e: self.increase_speed(float(self.interval_slider.get())))
         
         self.fmin_value = tk.IntVar()
         self.fmin_slider = tk.Scale(self.intervalScale, orient="horizontal", label="Fmin (Hz)", from_=1,
@@ -49,6 +50,9 @@ class Equalizer_Panel(tk.Frame):
         self.frameScale.grid(column=1, row=0)
 
     def increase_speed(self, value):
+        self.viewer.pause()
+        self.viewer._figure.axes[0].clear()
+        self.viewer._figure.axes[2].clear()
         self.viewer.plot(animated=True, interval=2-value)
 
     def update_spectrogram(self, fmin, fmax, inclusive_factor,exclusive_factor=1):

@@ -15,7 +15,7 @@ class Viewer(tk.Frame):
         self.master = master
         self.zoom_scale = 1.1
         self.playing = True
-        self.points_per_draw = 30
+        self.points_per_draw = 20
         self.signal = signal
         self.equalized_samples = signal["samples"].copy()
         self.time = np.linspace(
@@ -115,7 +115,6 @@ class Viewer(tk.Frame):
         after_ax = self._figure.axes[2]
 
         if animated:
-            self.pause()
             self._animation = None
             self.__animate_plot(before_ax, after_ax, interval)
 
@@ -142,14 +141,14 @@ class Viewer(tk.Frame):
         def init():
             # ax.set_xlim(0, 0.1*self.signal["N"]/self.signal["Fs"])
             # ax.set_xlim(0, 1)
-            before_ax.set_xlim(0, 0.02)
+            before_ax.set_xlim(0, 0.5)
             before_ax.set_ylim(
                 min(self.signal["samples"]), max(self.signal["samples"]))
             before_ax.set_xlabel("Time")
             before_ax.set_ylabel("Amplitude")
             before_ax.grid(True)
 
-            after_ax.set_xlim(0, 0.02)
+            after_ax.set_xlim(0, 0.5)
             after_ax.set_ylim(
                 min(self.equalized_samples), max(self.equalized_samples))
             after_ax.set_xlabel("Time")
@@ -259,29 +258,23 @@ class Viewer(tk.Frame):
 
         self._figure.axes[0].set_ylim(ymin * self.zoom_scale, ymax * self.zoom_scale)
         self._figure.axes[2].set_ylim(ymin * self.zoom_scale, ymax * self.zoom_scale)
-        # event.inaxes.plot(x,y)
+        self._figure.axes[0].set_xlim(xmin * self.zoom_scale, xmax * self.zoom_scale)
+        self._figure.axes[2].set_xlim(xmin * self.zoom_scale, xmax * self.zoom_scale)
+
         self._figure.canvas.draw_idle()
         self._figure.canvas.flush_events()
 
-    # Needs refactoring
     def zoom_in(self, event):
         xmin, xmax = event.inaxes.get_xlim()
         ymin, ymax = event.inaxes.get_ylim()
 
         self._figure.axes[0].set_ylim(ymin / self.zoom_scale, ymax / self.zoom_scale)
         self._figure.axes[2].set_ylim(ymin / self.zoom_scale, ymax / self.zoom_scale)
-        
-        # Plot a new line with the same data
-        # because for some reason the original line disappears
-        # when zooming on a paused plot
-        # print(event.inaxes.get_lines()[-1].get_animated())
-        # event.inaxes.plot(x, y, color="blue")
+        self._figure.axes[0].set_xlim(xmin / self.zoom_scale, xmax / self.zoom_scale)
+        self._figure.axes[2].set_xlim(xmin / self.zoom_scale, xmax / self.zoom_scale)
 
         self._figure.canvas.draw_idle()
         self._figure.canvas.flush_events()
-
-        # Remove the newly created line but don't update the canvas
-        # event.inaxes.get_lines()[-1].remove()
 
     def pause(self):
         if self._animation:
