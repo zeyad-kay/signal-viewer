@@ -254,29 +254,23 @@ class Viewer(tk.Frame):
             "button_release_event", release)
 
     def zoom_out(self, event):
-        x, y = event.inaxes.get_lines()[0].get_data()
+        xmin, xmax = event.inaxes.get_xlim()
+        ymin, ymax = event.inaxes.get_ylim()
 
+        self._figure.axes[0].set_ylim(ymin * self.zoom_scale, ymax * self.zoom_scale)
+        self._figure.axes[2].set_ylim(ymin * self.zoom_scale, ymax * self.zoom_scale)
         # event.inaxes.plot(x,y)
         self._figure.canvas.draw_idle()
+        self._figure.canvas.flush_events()
 
     # Needs refactoring
     def zoom_in(self, event):
         xmin, xmax = event.inaxes.get_xlim()
         ymin, ymax = event.inaxes.get_ylim()
 
-        # event.inaxes.set_xlim(xmin*0.5, xmax*0.5)
-        # event.inaxes.set_ylim(ymin*0.5, ymax*0.5)
-
-        if xmin == 0:
-            event.inaxes.set_xlim(
-                0, xmax / self.zoom_scale)
-        # else:
-        #     event.inaxes.set_xlim(
-        #         xmin * self.zoom_scale, xmax / self.zoom_scale)
-
-        # event.inaxes.set_ylim(
-        #     ymin * self.zoom_scale, ymax / self.zoom_scale)
-
+        self._figure.axes[0].set_ylim(ymin / self.zoom_scale, ymax / self.zoom_scale)
+        self._figure.axes[2].set_ylim(ymin / self.zoom_scale, ymax / self.zoom_scale)
+        
         # Plot a new line with the same data
         # because for some reason the original line disappears
         # when zooming on a paused plot
