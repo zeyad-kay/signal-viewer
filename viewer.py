@@ -15,12 +15,12 @@ class Viewer(tk.Frame):
         self.master = master
         self.zoom_scale = 1.1
         self.playing = True
-        self.points_per_draw = 20
+        self.points_per_draw = 50
         self.signal = signal
         self.equalized_samples = signal["samples"].copy()
         self.time = np.linspace(
             0, self.signal["N"] * 1/self.signal["Fs"], self.signal["N"])
-        self.current_frame = 1
+        self.current_frame = 100
         self._animation = None
         self.modes = {
             "zoomIn": self.zoom_in,
@@ -163,12 +163,12 @@ class Viewer(tk.Frame):
                     before_y = self.signal["samples"]
                     after_y = self.equalized_samples
                 else:
-                    x = self.time[:frame * self.points_per_draw]
-                    before_y = self.signal["samples"][:frame *
+                    self.current_frame = self.current_frame + 50
+                    x = self.time[:self.current_frame * self.points_per_draw]
+                    before_y = self.signal["samples"][:self.current_frame *
                                                       self.points_per_draw]
-                    after_y = self.equalized_samples[:frame *
+                    after_y = self.equalized_samples[:self.current_frame *
                                                      self.points_per_draw]
-                    self.current_frame = self.current_frame + 1
 
                 # update view limits
                 xmin, xmax = before_ax.get_xlim()
@@ -256,10 +256,8 @@ class Viewer(tk.Frame):
         xmin, xmax = event.inaxes.get_xlim()
         ymin, ymax = event.inaxes.get_ylim()
 
-        self._figure.axes[0].set_ylim(ymin * self.zoom_scale, ymax * self.zoom_scale)
-        self._figure.axes[2].set_ylim(ymin * self.zoom_scale, ymax * self.zoom_scale)
-        self._figure.axes[0].set_xlim(xmin * self.zoom_scale, xmax * self.zoom_scale)
-        self._figure.axes[2].set_xlim(xmin * self.zoom_scale, xmax * self.zoom_scale)
+        self._figure.axes[0].set_xlim(xmin / self.zoom_scale, xmax * self.zoom_scale)
+        self._figure.axes[2].set_xlim(xmin / self.zoom_scale, xmax * self.zoom_scale)
 
         self._figure.canvas.draw_idle()
         self._figure.canvas.flush_events()
@@ -268,8 +266,6 @@ class Viewer(tk.Frame):
         xmin, xmax = event.inaxes.get_xlim()
         ymin, ymax = event.inaxes.get_ylim()
 
-        self._figure.axes[0].set_ylim(ymin / self.zoom_scale, ymax / self.zoom_scale)
-        self._figure.axes[2].set_ylim(ymin / self.zoom_scale, ymax / self.zoom_scale)
         self._figure.axes[0].set_xlim(xmin / self.zoom_scale, xmax / self.zoom_scale)
         self._figure.axes[2].set_xlim(xmin / self.zoom_scale, xmax / self.zoom_scale)
 
