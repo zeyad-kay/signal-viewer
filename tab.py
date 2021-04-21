@@ -7,7 +7,6 @@ class Tab(tk.Frame):
     def __init__(self,master=None,signal={}):
         super().__init__(master,background="white")
         self._mode = None
-        self.viewers = []
 
         self.signal = signal
         self.master.add(self,text=self.signal["label"])

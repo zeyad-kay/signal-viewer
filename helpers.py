@@ -58,7 +58,7 @@ def equalize(original_fourier,current_equalized_fourier,N,Fs,fmin,fmax,inclusive
     return equalized_fourier
 
 def save_wav(filename,rate,samples):
-    write(filename,rate,samples)
+    write(filename,rate,samples.astype(np.int16))
 
 def read_wav(filename):
     Fs,data=read(filename)

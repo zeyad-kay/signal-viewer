@@ -22,9 +22,9 @@ class File_Explorer():
                                                        ("all files",
                                                         "*.*"))) or ""
         if re.search(".wav\Z",filename) is not None:
-            threading.Thread(target=save_wav,args=(filename,root.signal["Fs"],root.signal["samples"])).run()
+            threading.Thread(target=save_wav,args=(filename,root.viewer.signal["Fs"],root.viewer.equalized_samples)).run()
         elif re.search(".pdf\Z",filename) is not None:
-            threading.Thread(target=save_pdf,args=(filename,root.viewers[1].signal,root.viewers[1].time,root.viewers[1].equalized_samples)).run()
+            threading.Thread(target=save_pdf,args=(filename,root.viewer.signal,root.viewer.time,root.viewer.equalized_samples)).run()
         else:
             return None
 
