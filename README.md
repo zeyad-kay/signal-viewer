@@ -1,5 +1,7 @@
 # Signal Viewer
-This is a desktop GUI for viewing edf signal files and providing basic controls for playing, pausing, scrolling, zooming and saving pdf reports for the uploaded signals alongside spectrograms.
+This is a desktop GUI for viewing *edf* signal files and *wav* audio files and providing basic controls for playing, pausing, scrolling, zooming and saving pdf reports for the uploaded signals alongside spectrograms.
+
+There is a built-in equalizer for audio files along with saving the equalized audio.
 
 Multiple signals can be viewed simultaneously by uploading an edf file, then the GUI automatically syncs the plots.
 
@@ -21,4 +23,4 @@ Multiple signals can be viewed simultaneously by uploading an edf file, then the
 > python app.py
 ```
 
-There is a sample file in the repo *SampleECG.edf* for trying out.
+There are sample files in the repo *SampleECG.edf*  and *demo.wav* for trying out.
