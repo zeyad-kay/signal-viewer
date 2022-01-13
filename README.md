@@ -8,19 +8,19 @@ Multiple signals can be viewed simultaneously by uploading an edf file, then the
 # Setup
 
 1. From the command line create a virtual environment and activate.
-```
+```console
 > python -m venv .venv
 > .venv\Scripts\activate
 ```
 
 2. Install dependencies.
-```
+```console
 > pip install -r requirements.txt
 ```
 
 3. Run the app.
-```
-> python app.py
+```console
+> python src/main.py
 ```
 
 There are sample files in the repo *SampleECG.edf*  and *demo.wav* for trying out.
