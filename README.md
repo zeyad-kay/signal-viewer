@@ -23,4 +23,4 @@ Multiple signals can be viewed simultaneously by uploading an edf file, then the
 > python src/main.py
 ```
 
-There are sample files in the repo *SampleECG.edf*  and *demo.wav* for trying out.
+The *samples* folder contains *SampleECG.edf* and *demo.wav* for testing.
