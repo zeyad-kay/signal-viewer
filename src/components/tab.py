@@ -1,7 +1,7 @@
 import tkinter as tk
-from toolbar import ToolBar
-from viewer import Viewer
-from equalizer import Equalizer_Panel
+from .toolbar import ToolBar
+from .viewer import Viewer
+from .equalizer import Equalizer_Panel
 
 class Tab(tk.Frame):
     def __init__(self,master=None,signal={}):

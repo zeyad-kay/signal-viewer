@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from tab import Tab
-from menu import MenuBar
+from components import Tab, MenuBar
 
 class Application(tk.Frame):
     def __init__(self, master=None):

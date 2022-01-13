@@ -1,6 +1,6 @@
 import numpy as np
-from helpers import equalize
-from slider import Frequency_Slider
+from core.equalize import equalize
+from .slider import Frequency_Slider
 import tkinter as tk
 
 class Equalizer_Panel(tk.Frame):

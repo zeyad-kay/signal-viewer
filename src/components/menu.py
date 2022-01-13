@@ -1,6 +1,6 @@
 import tkinter as tk
 import sys
-from file_explorer import File_Explorer 
+from .file_explorer import File_Explorer 
 
 class MenuBar(tk.Menu):
     def __init__(self, master):

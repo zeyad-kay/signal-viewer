@@ -1,5 +1,5 @@
 from tkinter import filedialog
-from helpers import read_edf,save_pdf,read_wav,save_wav
+from core.io import read_edf,save_pdf,read_wav,save_wav
 import threading
 import re
 

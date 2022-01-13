@@ -1,8 +1,7 @@
-import numpy as np
-import pyedflib
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from scipy.io.wavfile import read,write
+import pyedflib
 
 def read_edf(filename):
     """
@@ -17,6 +16,20 @@ def read_edf(filename):
         "samples":samples,
         "N":len(samples),
         "Fs": Fs,
+        "label":label
+    }
+
+def save_wav(filename,rate,samples):
+    write(filename,rate,samples.astype(np.int16))
+
+def read_wav(filename):
+    Fs,data=read(filename)
+    samples = data
+    label = filename.split("/")[-1][:-4]
+    return {
+        "Fs":Fs,
+        "samples":samples,
+        "N":len(samples),
         "label":label
     }
 
@@ -40,33 +53,3 @@ def save_pdf(filename,signal,time,equalized_samples):
         axs[1][1].set_title("Equalized" + " " + signal["label"] + " " + "Spectrogram")
         
         pdf.savefig()
-
-def equalize(original_fourier,current_equalized_fourier,N,Fs,fmin,fmax,inclusive_factor=1,exclusive_factor=1):
-    # boundary condition for the last slider
-    if Fs/2 == fmax:
-        fmax = fmax + 1
-    
-    freq = np.fft.fftfreq(N,1/Fs)
-    equalized_fourier = []
-    for i,freq in enumerate(freq):
-        if abs(freq) >= fmin and abs(freq) < fmax:
-            equalized_fourier.append(original_fourier[i]*inclusive_factor)   
-        else:
-            equalized_fourier.append(current_equalized_fourier[i]*exclusive_factor)
-
-    equalized_fourier = np.array(equalized_fourier)
-    return equalized_fourier
-
-def save_wav(filename,rate,samples):
-    write(filename,rate,samples.astype(np.int16))
-
-def read_wav(filename):
-    Fs,data=read(filename)
-    samples = data
-    label = filename.split("/")[-1][:-4]
-    return {
-        "Fs":Fs,
-        "samples":samples,
-        "N":len(samples),
-        "label":label
-    }
